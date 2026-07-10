@@ -19,8 +19,9 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.prm393.wakelock_prm393"
-        // minSdk 23: required for the lock-screen overlay + notification features.
-        minSdk = 23
+        // Lock-screen overlay + notifications need API 23+; Flutter's default
+        // minSdk already satisfies this, so we track it rather than pinning.
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../data/datasources/alarm_local_cache_datasource.dart';
 import '../../data/datasources/alarm_remote_datasource.dart';
 import '../../data/repositories/alarm_repository_impl.dart';
+import '../../data/repositories/in_memory_alarm_repository.dart';
 import '../../domain/entities/alarm.dart';
 import '../../domain/repositories/alarm_repository.dart';
 
@@ -17,6 +19,10 @@ final alarmLocalCacheProvider = Provider<AlarmLocalCacheDataSource>((ref) {
 });
 
 final alarmRepositoryProvider = Provider<AlarmRepository>((ref) {
+  // No Supabase configured -> serve demo data so the UI is viewable offline.
+  if (!Env.isConfigured) {
+    return InMemoryAlarmRepository.demo();
+  }
   return AlarmRepositoryImpl(
     ref.watch(alarmRemoteDataSourceProvider),
     ref.watch(alarmLocalCacheProvider),
