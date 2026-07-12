@@ -19,31 +19,17 @@ class DismissTaskSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // All choices share one row (no horizontal scroll): equal-width,
-        // compact chips with small labels so five fit on screen.
-        Row(
+        // Full-size chips; wrap onto a second row when five don't fit one line
+        // (all remain visible, no horizontal scrolling).
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
             for (final type in DismissTaskType.values)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: ChoiceChip(
-                    label: Text(
-                      type.label,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    selected: value.type == type,
-                    showCheckmark: false,
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-                    onSelected: (_) => onChanged(value.copyWith(type: type)),
-                  ),
-                ),
+              ChoiceChip(
+                label: Text(type.label),
+                selected: value.type == type,
+                onSelected: (_) => onChanged(value.copyWith(type: type)),
               ),
           ],
         ),
