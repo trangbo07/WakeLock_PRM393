@@ -4,8 +4,8 @@
 
 Feature-first + Clean Architecture. Mỗi feature tự chứa 3 lớp:
 
-- **domain** — entity thuần Dart + interface repository (không phụ thuộc Flutter/Supabase).
-- **data** — model (JSON), datasource (Supabase remote + local cache), impl repository.
+- **domain** — entity thuần Dart + interface repository (không phụ thuộc Flutter/sqflite).
+- **data** — model (map SQLite row), datasource (SQLite CRUD), impl repository.
 - **presentation** — Riverpod provider + page + widget.
 
 `core/` giữ code dùng chung; `app/` giữ MaterialApp/theme/router.
@@ -14,14 +14,17 @@ Feature-first + Clean Architecture. Mỗi feature tự chứa 3 lớp:
 
 ```
 AlarmEditPage → alarmRepositoryProvider (Riverpod)
-             → AlarmRepositoryImpl
-                 ├─ AlarmRemoteDataSource   → Supabase (bảng alarms)  [nguồn sự thật]
-                 └─ AlarmLocalCacheDataSource → SharedPreferences      [mirror offline]
+             → LocalAlarmRepository
+                 └─ AlarmLocalDataSource → SQLite `wakelock.db` (bảng alarms)  [nguồn sự thật duy nhất]
              → AlarmScheduler.scheduleOneShot()  (android_alarm_manager_plus)
 ```
 
-Cache local là bắt buộc: bộ lập lịch chạy trong **isolate nền** lúc báo thức kêu,
-thường không có mạng — phải đọc được cấu hình báo thức offline.
+Toàn bộ dữ liệu nằm trên máy (`AppDatabase` — core/database/app_database.dart).
+Không có backend/sync: báo thức gắn với thiết bị, và bộ lập lịch chạy trong
+**isolate nền** lúc báo thức kêu (thường không có mạng) đọc thẳng SQLite —
+sqflite mở được từ isolate nền an toàn.
+
+DB được seed 3 báo thức demo khi tạo lần đầu (gỡ khi `AlarmEditPage` có form thật).
 
 ## Luồng báo thức kêu (hardcore)
 
@@ -45,29 +48,26 @@ thường không có mạng — phải đọc được cấu hình báo thức o
 | `flutter_foreground_task` | Service chống tắt ngầm | Cần `init(...)` config trong bootstrap |
 | `android_alarm_manager_plus` | Lập lịch chính xác | Cần gọi `AndroidAlarmManager.initialize()` |
 
-## Schema Supabase (đề xuất — bảng `alarms`)
+## Schema SQLite (bảng `alarms` — tạo trong `AppDatabase._onCreate`)
 
 ```sql
-create table public.alarms (
-  id             uuid primary key default gen_random_uuid(),
-  user_id        uuid not null default auth.uid() references auth.users(id),
-  label          text not null default '',
-  hour           int  not null check (hour between 0 and 23),
-  minute         int  not null check (minute between 0 and 59),
-  repeat_days    int[] not null default '{}',      -- 1=T2 .. 7=CN
-  is_enabled     bool not null default true,
-  ringtone_id    text not null default 'default',
-  vibrate        bool not null default true,
-  volume_lock    bool not null default true,
-  escalate_volume bool not null default true,
-  dismiss_task   jsonb not null default '{"type":"math","difficulty":3,"shake_count":50}',
-  created_at     timestamptz not null default now()
+CREATE TABLE alarms (
+  id              TEXT PRIMARY KEY,                    -- UUID string
+  label           TEXT NOT NULL DEFAULT '',
+  hour            INTEGER NOT NULL,                    -- 0..23
+  minute          INTEGER NOT NULL,                    -- 0..59
+  repeat_days     TEXT NOT NULL DEFAULT '[]',          -- JSON int list, 1=T2 .. 7=CN
+  is_enabled      INTEGER NOT NULL DEFAULT 1,          -- bool 0/1
+  ringtone_id     TEXT NOT NULL DEFAULT 'default',
+  vibrate         INTEGER NOT NULL DEFAULT 1,
+  volume_lock     INTEGER NOT NULL DEFAULT 1,
+  escalate_volume INTEGER NOT NULL DEFAULT 1,
+  dismiss_task    TEXT NOT NULL                        -- JSON DismissTaskConfig
 );
-
-alter table public.alarms enable row level security;
-create policy "own alarms" on public.alarms
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
+
+Mapping row ↔ entity nằm ở `AlarmModel.fromDbRow/toDbRow` (bool ↔ INTEGER,
+list/object ↔ JSON TEXT). Nâng version + migration trong `openDatabase` khi đổi schema.
 
 ## Quyền Android (đã khai báo trong AndroidManifest.xml)
 

@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///     notifications, battery-optimization exemption, camera.
 ///   - Toggle the anti-kill foreground service.
 ///   - Default dismiss task + default ringtone.
-///   - Account (Supabase auth) sign-in/out.
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 

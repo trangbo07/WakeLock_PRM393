@@ -1,15 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../database/app_database.dart';
 import '../platform/alarm_scheduler.dart';
 import '../platform/foreground_service.dart';
 import '../platform/overlay_service.dart';
 import '../platform/volume_lock_channel.dart';
 
-/// Global Supabase client (initialized in `bootstrap()`).
-final supabaseClientProvider = Provider<SupabaseClient>((ref) {
-  return Supabase.instance.client;
-});
+/// Local SQLite database (pre-opened in `bootstrap()`).
+final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase.instance);
 
 /// Platform-service singletons exposed to the rest of the app via Riverpod.
 final alarmSchedulerProvider = Provider<AlarmScheduler>((ref) => AlarmScheduler());

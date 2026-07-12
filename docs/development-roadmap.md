@@ -3,7 +3,7 @@
 ## Phase 0 — Kick-off scaffold ✅ (hoàn thành)
 
 - [x] Khởi tạo Flutter project (Android-only)
-- [x] Tích hợp dependencies (Riverpod, Supabase, alarm manager, overlay, foreground task, audioplayers, scanner, sensors...)
+- [x] Tích hợp dependencies (Riverpod, sqflite, alarm manager, overlay, foreground task, audioplayers, scanner, sensors...)
 - [x] Cấu trúc feature-first + Clean Architecture
 - [x] Entity + repository + datasource + provider cho alarm
 - [x] Skeleton page cho mọi màn hình (list, edit, ringtone, task×4, ringing, settings)
@@ -13,11 +13,10 @@
 
 ## Phase 1 — Quản lý báo thức (MVP chuẩn)
 
-- [ ] Tạo bảng `alarms` + RLS trên Supabase (schema trong system-architecture.md)
-- [ ] Supabase auth ẩn danh khi mở app lần đầu
+- [x] Database SQLite local (`AppDatabase`, bảng `alarms` — schema trong system-architecture.md; thay Supabase 2026-07-12)
 - [ ] Hoàn thiện `AlarmEditPage`: TimePicker, WeekdaySelector, tên, chọn nhạc chuông, chọn nhiệm vụ
-- [ ] Nối realtime stream Supabase → `alarmListProvider`
 - [ ] Bật/tắt + xóa báo thức đồng bộ với scheduler
+- [ ] Gỡ seed demo trong `AppDatabase` khi form tạo báo thức hoạt động
 
 ## Phase 2 — Lên lịch & báo thức kêu
 
@@ -43,7 +42,7 @@
 ## Phase 5 — Hoàn thiện
 
 - [ ] Onboarding cấp quyền (settings page)
-- [ ] Kho nhạc chuông thật (assets/ringtones/ hoặc Supabase Storage)
+- [ ] Kho nhạc chuông thật (assets/ringtones/)
 - [ ] Test tích hợp luồng báo thức
 - [ ] Đánh bóng UI/UX, dark theme
 
@@ -51,3 +50,4 @@
 
 - Dùng `dart analyze` thay `flutter analyze` (LSP server crash với đường dẫn Unicode "Máy tính").
 - iOS đã loại bỏ — tính năng hardcore không khả thi trên iOS.
+- 2026-07-12: bỏ Supabase, chuyển sang SQLite local-only (`sqflite`) — báo thức là dữ liệu per-device, isolate nền phải đọc offline; xem `plans/260712-1659-migrate-supabase-to-sqlite/plan.md`.

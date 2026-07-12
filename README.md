@@ -10,7 +10,7 @@
 |-----|----------|
 | Ngôn ngữ / Framework | Dart + Flutter 3.44 |
 | State management | Riverpod 3.x |
-| Backend / Database | Supabase (cloud) + cache local (SharedPreferences) cho offline |
+| Database | SQLite (`sqflite`) — lưu 100% trên máy, offline-first, không cần backend |
 | Nền tảng | **Android only** (tính năng hardcore yêu cầu quyền chỉ Android có) |
 | Kiến trúc | Feature-first + Clean Architecture (data / domain / presentation) |
 
@@ -36,11 +36,11 @@ lib/
 │   ├── router/app_router.dart
 │   └── theme/
 ├── core/                         # dùng chung toàn app
-│   ├── bootstrap.dart            # init env + Supabase + (TODO) services
-│   ├── config/env.dart           # đọc biến từ .env
+│   ├── bootstrap.dart            # mở SQLite + (TODO) init services
+│   ├── database/app_database.dart # singleton SQLite (bảng alarms + seed demo)
 │   ├── constants/
 │   ├── error/failures.dart
-│   ├── providers/core_providers.dart   # Supabase client + platform services
+│   ├── providers/core_providers.dart   # database + platform services
 │   ├── platform/                 # cầu nối native cho tính năng hardcore
 │   │   ├── alarm_scheduler.dart
 │   │   ├── overlay_service.dart
@@ -52,8 +52,7 @@ lib/
     ├── ringtone/                 # kho nhạc chuông
     ├── task/                     # nhiệm vụ tắt báo thức (math/shake/qr/photo)
     ├── alarm_ringing/            # màn hình reo + overlay entry point
-    ├── settings/                 # cấp quyền, cấu hình
-    └── auth/                     # Supabase auth (ẩn danh)
+    └── settings/                 # cấp quyền, cấu hình
 ```
 
 Xem thêm: [`docs/system-architecture.md`](docs/system-architecture.md), [`docs/development-roadmap.md`](docs/development-roadmap.md).
@@ -64,16 +63,11 @@ Xem thêm: [`docs/system-architecture.md`](docs/system-architecture.md), [`docs/
    ```bash
    flutter pub get
    ```
-2. Cấu hình Supabase — copy `.env.example` thành `.env` và điền key:
-   ```
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your-anon-public-key
-   ```
-   > Bỏ trống cũng chạy được — app vào chế độ offline/UI để dev giao diện.
-3. Chạy trên thiết bị/emulator Android:
+2. Chạy trên thiết bị/emulator Android:
    ```bash
    flutter run
    ```
+   > Không cần cấu hình gì thêm — database SQLite tự tạo trên máy kèm 3 báo thức demo (seed sẽ gỡ khi form tạo báo thức hoàn thiện).
 
 ## Kiểm tra chất lượng
 
@@ -85,7 +79,6 @@ flutter test              # unit + widget test
 ## Việc cần làm tiếp (kick-off → MVP)
 
 Xem checklist chi tiết trong [`docs/development-roadmap.md`](docs/development-roadmap.md). Tóm tắt bước kế tiếp:
-- Tạo bảng `alarms` trên Supabase (schema trong `docs/system-architecture.md`).
 - Hoàn thiện form `AlarmEditPage` + nối `AlarmScheduler`.
 - Viết native MethodChannel `wakelock/volume` trong `MainActivity.kt`.
 - Cấu hình `FlutterForegroundTask.init(...)` trong `bootstrap()`.

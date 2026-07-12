@@ -35,7 +35,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.3.2
-  supabase_flutter: ^2.16.0
+  # Local SQLite database — single source of truth for alarms (offline-first).
+  sqflite: ^2.4.1
+  path: ^1.9.0
   android_alarm_manager_plus: ^5.1.0
   flutter_local_notifications: ^22.0.1
   flutter_overlay_window: ^0.5.0
@@ -45,11 +47,9 @@ dependencies:
   mobile_scanner: ^7.2.0
   image_picker: ^1.2.3
   sensors_plus: ^7.1.0
-  flutter_dotenv: ^6.0.1
   equatable: ^2.1.0
   intl: ^0.20.3
   uuid: ^4.5.3
-  shared_preferences: ^2.5.5
   google_fonts: ^8.1.0
 
 dev_dependencies:
@@ -75,8 +75,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    # Supabase credentials loaded at runtime by flutter_dotenv.
-    - .env
     # Alarm ringtone audio files ("kho nhạc chuông"). Drop .mp3/.wav here.
     - assets/ringtones/
 

@@ -4,8 +4,7 @@ import '../../domain/repositories/ringtone_repository.dart';
 /// Built-in ringtone catalog.
 ///
 /// TODO: drop real audio files under `assets/ringtones/` and register them in
-/// `pubspec.yaml`. Consider adding user-uploaded ringtones via Supabase Storage
-/// later.
+/// `pubspec.yaml`.
 class RingtoneRepositoryImpl implements RingtoneRepository {
   static const List<Ringtone> _builtIn = [
     Ringtone(

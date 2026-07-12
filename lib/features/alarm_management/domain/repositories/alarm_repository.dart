@@ -1,7 +1,7 @@
 import '../entities/alarm.dart';
 
-/// Abstraction over alarm persistence. Backed by Supabase (remote) mirrored to
-/// a local cache so scheduling works offline.
+/// Abstraction over alarm persistence. Backed by on-device SQLite so the
+/// background scheduler can read alarm config fully offline.
 abstract interface class AlarmRepository {
   Future<List<Alarm>> getAlarms();
   Future<Alarm?> getAlarmById(String id);

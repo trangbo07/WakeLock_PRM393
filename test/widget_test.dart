@@ -1,5 +1,5 @@
-// Backend-free smoke tests. The home screen depends on Supabase (initialized
-// in bootstrap), so these exercise pure widgets/logic that need no backend.
+// Smoke tests for pure widgets/logic. The home screen reads SQLite (opened in
+// bootstrap), which needs a device/emulator — covered by integration tests.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

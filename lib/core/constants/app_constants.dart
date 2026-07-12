@@ -4,11 +4,9 @@ class AppConstants {
 
   static const String appName = 'WakeLock';
 
-  /// Supabase table names.
+  /// SQLite database file + table names.
+  static const String databaseFile = 'wakelock.db';
   static const String alarmsTable = 'alarms';
-
-  /// SharedPreferences keys.
-  static const String cachedAlarmsKey = 'cached_alarms';
 
   /// Default hardcore behavior toggles.
   static const int defaultShakeCount = 50;

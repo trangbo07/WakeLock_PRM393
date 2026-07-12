@@ -4,14 +4,9 @@ sealed class Failure {
   final String message;
 }
 
-/// Network / Supabase request failed.
-class RemoteFailure extends Failure {
-  const RemoteFailure(super.message);
-}
-
-/// Local cache / storage failed.
-class CacheFailure extends Failure {
-  const CacheFailure(super.message);
+/// Local SQLite read/write failed.
+class DatabaseFailure extends Failure {
+  const DatabaseFailure(super.message);
 }
 
 /// A required Android permission was not granted (overlay, exact alarm, etc.).
