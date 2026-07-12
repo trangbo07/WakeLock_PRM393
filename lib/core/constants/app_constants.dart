@@ -7,6 +7,7 @@ class AppConstants {
   /// SQLite database file + table names.
   static const String databaseFile = 'wakelock.db';
   static const String alarmsTable = 'alarms';
+  static const String customRingtonesTable = 'custom_ringtones';
 
   /// Default hardcore behavior toggles.
   static const int defaultShakeCount = 50;

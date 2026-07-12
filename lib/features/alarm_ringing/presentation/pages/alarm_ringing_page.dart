@@ -10,7 +10,6 @@ import '../../../alarm_management/domain/entities/alarm.dart';
 import '../../../ringtone/presentation/providers/ringtone_providers.dart';
 import '../../../task/domain/entities/task_result.dart';
 import '../../../task/presentation/task_runner_page.dart';
-import '../../data/ringtone_player_service.dart';
 
 /// Full-screen, hard-to-escape ringing screen.
 ///
@@ -29,7 +28,9 @@ class AlarmRingingPage extends ConsumerStatefulWidget {
 }
 
 class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
-  final RingtonePlayerService _player = RingtonePlayerService();
+  // Captured in initState so dispose() can stop the sound without touching
+  // `ref` during widget-tree finalization (Riverpod forbids that).
+  late final _ringtoneChannel = ref.read(systemRingtoneChannelProvider);
 
   @override
   void initState() {
@@ -41,11 +42,12 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
   /// native channel must never prevent the screen itself from showing.
   Future<void> _startRinging() async {
     try {
-      final ringtone = await ref
-          .read(ringtoneRepositoryProvider)
-          .getById(widget.alarm.ringtoneId);
-      final asset = ringtone?.assetPath ?? 'assets/ringtones/default.wav';
-      await _player.play(asset, escalate: widget.alarm.escalateVolume);
+      // The device system sound (or the user's custom file) is played natively
+      // by RingtoneManager, looping on the alarm stream.
+      await _ringtoneChannel.startAlarm(
+        widget.alarm.ringtoneId,
+        escalate: widget.alarm.escalateVolume,
+      );
     } catch (e) {
       AppLogger.e('Ringtone playback failed: $e');
     }
@@ -75,9 +77,9 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
     final notifId = AlarmScheduler.stableId(widget.alarm.id);
     () async {
       try {
-        await _player.stop();
+        await _ringtoneChannel.stopAlarm();
       } catch (e) {
-        AppLogger.w('Player stop failed: $e');
+        AppLogger.w('Alarm sound stop failed: $e');
       }
       try {
         await volumeLock?.unlock();
@@ -113,8 +115,9 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
 
   @override
   void dispose() {
-    _player.dispose().catchError((Object e) {
-      AppLogger.w('Player dispose failed: $e');
+    // Safety net: stop the sound if the screen is torn down without dismiss.
+    _ringtoneChannel.stopAlarm().catchError((Object e) {
+      AppLogger.w('Alarm sound stop failed: $e');
     });
     super.dispose();
   }

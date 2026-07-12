@@ -42,7 +42,6 @@ dependencies:
   flutter_local_notifications: ^22.0.1
   flutter_overlay_window: ^0.5.0
   flutter_foreground_task: ^9.2.2
-  audioplayers: ^6.8.1
   permission_handler: ^12.0.3
   mobile_scanner: ^7.2.0
   image_picker: ^1.2.3
@@ -51,6 +50,9 @@ dependencies:
   intl: ^0.20.3
   uuid: ^4.5.3
   google_fonts: ^8.1.0
+  # Let users pick their own audio file as a custom ringtone.
+  file_picker: ^8.1.7
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -75,10 +77,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
-  assets:
-    # Alarm ringtone audio files ("kho nhạc chuông"). Drop .mp3/.wav here.
-    - assets/ringtones/
+  # No bundled audio: ringtones come from the device's system alarm sounds
+  # (RingtoneManager) or files the user picks themselves.
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

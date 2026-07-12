@@ -1,22 +1,24 @@
 import 'package:equatable/equatable.dart';
 
-/// A selectable alarm sound.
+/// A selectable alarm sound: either a device system ringtone or a file the
+/// user added themselves.
 ///
-/// [highFrequency] flags the "khủng bố" tones (piercing, hard to sleep through)
-/// used by the terror-ringtone library.
+/// [uri] is the Android content:// URI, an absolute file path (user-picked
+/// file), or the sentinel `'default'` for the system default alarm. It doubles
+/// as the stable id stored on an alarm.
 class Ringtone extends Equatable {
   const Ringtone({
-    required this.id,
+    required this.uri,
     required this.name,
-    required this.assetPath,
-    this.highFrequency = false,
+    this.isCustom = false,
   });
 
-  final String id;
+  final String uri;
   final String name;
-  final String assetPath;
-  final bool highFrequency;
+
+  /// True for a file the user added (can be removed by the user).
+  final bool isCustom;
 
   @override
-  List<Object?> get props => [id, name, assetPath, highFrequency];
+  List<Object?> get props => [uri, name, isCustom];
 }

@@ -1,98 +1,77 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../../core/platform/system_ringtone_channel.dart';
 import '../../domain/entities/ringtone.dart';
 import '../../domain/repositories/ringtone_repository.dart';
+import '../datasources/custom_ringtone_datasource.dart';
 
-/// Built-in ringtone catalog. The .wav files are generated tones that loop
-/// seamlessly via `ReleaseMode.loop`. [highFrequency] flags the piercing,
-/// hard-to-sleep-through ones.
+/// Merges the device's real system alarm sounds (native channel) with the
+/// user's own added audio files (SQLite + copied files in app storage).
 class RingtoneRepositoryImpl implements RingtoneRepository {
-  static const List<Ringtone> _builtIn = [
-    // Modern / melodic — synthesized original tunes (trendy feel).
-    Ringtone(
-      id: 'marimba',
-      name: 'Marimba',
-      assetPath: 'assets/ringtones/marimba.wav',
-    ),
-    Ringtone(
-      id: 'melody',
-      name: 'Giai điệu vui',
-      assetPath: 'assets/ringtones/melody.wav',
-    ),
-    Ringtone(
-      id: 'edm_pluck',
-      name: 'EDM Pluck',
-      assetPath: 'assets/ringtones/edm_pluck.wav',
-    ),
-    Ringtone(
-      id: 'lofi',
-      name: 'Lo-fi chill',
-      assetPath: 'assets/ringtones/lofi.wav',
-    ),
-    Ringtone(
-      id: 'arcade',
-      name: 'Game retro',
-      assetPath: 'assets/ringtones/arcade.wav',
-    ),
-    Ringtone(
-      id: 'bass_drop',
-      name: 'Bass Drop',
-      assetPath: 'assets/ringtones/bass_drop.wav',
-    ),
-    // Classic tones.
-    Ringtone(
-      id: 'default',
-      name: 'Mặc định',
-      assetPath: 'assets/ringtones/default.wav',
-    ),
-    Ringtone(
-      id: 'beep_slow',
-      name: 'Bíp chậm',
-      assetPath: 'assets/ringtones/beep_slow.wav',
-    ),
-    Ringtone(
-      id: 'digital',
-      name: 'Kỹ thuật số',
-      assetPath: 'assets/ringtones/digital.wav',
-    ),
-    Ringtone(
-      id: 'chime',
-      name: 'Chuông ngân',
-      assetPath: 'assets/ringtones/chime.wav',
-    ),
-    // Hardcore high-frequency — hard to sleep through.
-    Ringtone(
-      id: 'siren',
-      name: 'Còi hú',
-      assetPath: 'assets/ringtones/siren.wav',
-      highFrequency: true,
-    ),
-    Ringtone(
-      id: 'nuclear',
-      name: 'Báo động',
-      assetPath: 'assets/ringtones/nuclear.wav',
-      highFrequency: true,
-    ),
-    Ringtone(
-      id: 'buzzer',
-      name: 'Còi xe',
-      assetPath: 'assets/ringtones/buzzer.wav',
-      highFrequency: true,
-    ),
-    Ringtone(
-      id: 'pulse',
-      name: 'Xung nhịp',
-      assetPath: 'assets/ringtones/pulse.wav',
-      highFrequency: true,
-    ),
-  ];
+  RingtoneRepositoryImpl(this._channel, this._customDs);
+
+  final SystemRingtoneChannel _channel;
+  final CustomRingtoneDataSource _customDs;
+
+  static const Ringtone _fallback =
+      Ringtone(uri: 'default', name: 'Mặc định hệ thống');
+
+  Future<List<Ringtone>> _systemList() async {
+    try {
+      final list = await _channel.list();
+      return list.isEmpty ? const [_fallback] : list;
+    } catch (_) {
+      return const [_fallback];
+    }
+  }
 
   @override
-  Future<List<Ringtone>> getRingtones() async => _builtIn;
+  Future<List<Ringtone>> getRingtones() async {
+    final custom = await _customDs.fetchAll();
+    final system = await _systemList();
+    // Custom ringtones first so the user's own picks are easy to reach.
+    return [...custom, ...system];
+  }
 
   @override
-  Future<Ringtone?> getById(String id) async {
-    for (final r in _builtIn) {
-      if (r.id == id) return r;
+  Future<Ringtone?> getByUri(String uri) async {
+    for (final r in await getRingtones()) {
+      if (r.uri == uri) return r;
     }
     return null;
+  }
+
+  @override
+  Future<Ringtone> addCustom(String sourcePath) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, 'ringtones'));
+    if (!dir.existsSync()) dir.createSync(recursive: true);
+
+    // Copy into permanent app storage so it survives reboots / cache clears.
+    final dest = p.join(dir.path, '${const Uuid().v4()}${p.extension(sourcePath)}');
+    await File(sourcePath).copy(dest);
+
+    final ringtone = Ringtone(
+      uri: dest,
+      name: p.basenameWithoutExtension(sourcePath),
+      isCustom: true,
+    );
+    await _customDs.insert(ringtone);
+    return ringtone;
+  }
+
+  @override
+  Future<void> removeCustom(String uri) async {
+    await _customDs.delete(uri);
+    try {
+      final file = File(uri);
+      if (file.existsSync()) file.deleteSync();
+    } catch (_) {
+      // File already gone — the DB row removal is what matters.
+    }
   }
 }

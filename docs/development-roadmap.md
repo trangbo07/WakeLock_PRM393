@@ -45,7 +45,7 @@
 ## Phase 5 — Hoàn thiện ✅ (hoàn thành 2026-07-12)
 
 - [x] Onboarding cấp quyền (SettingsPage — trạng thái grant + nút cấp, làm ở Phase 4)
-- [x] Kho nhạc chuông thật (assets/ringtones/ — .wav tự sinh, làm ở Phase 2)
+- [x] Kho nhạc chuông: nhạc hệ thống Android thật (RingtoneManager) + người dùng tự tải file (file_picker) — nghe thử + xóa; không nhúng audio bản quyền
 - [x] Test tích hợp luồng báo thức (LocalAlarmRepository + SQLite ffi in-memory + fake scheduler)
 - [x] Đánh bóng UI/UX: alarm list dạng card + loại nhiệm vụ + dim khi tắt, empty state có hướng dẫn
 

@@ -78,7 +78,7 @@ flutter test              # unit + widget test
 
 ## Việc cần làm tiếp (kick-off → MVP)
 
-MVP đã hoàn thành. Hướng mở rộng khả dĩ (chưa làm):
+MVP đã hoàn thành. Kho nhạc chuông dùng âm báo thức hệ thống Android (RingtoneManager)
++ cho phép người dùng tự tải file nhạc lên (không nhúng audio bản quyền). Hướng mở rộng:
 - Nhận diện vật thể on-device cho nhiệm vụ chụp ảnh.
 - Snooze có giới hạn / thống kê thức dậy.
-- Kho nhạc chuông người dùng tự thêm.

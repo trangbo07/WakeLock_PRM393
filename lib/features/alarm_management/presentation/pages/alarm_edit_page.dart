@@ -107,14 +107,16 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
     if (mounted) Navigator.pop(context, true);
   }
 
-  /// Display name of the currently selected ringtone (falls back to its id
-  /// while the catalog is still loading).
+  /// Display name of the currently selected ringtone. Falls back to a friendly
+  /// label for the default sentinel while the catalog is still loading.
   String _ringtoneName() {
     final ringtones = ref.watch(ringtoneListProvider).value ?? const [];
     for (final r in ringtones) {
-      if (r.id == _draft.ringtoneId) return r.name;
+      if (r.uri == _draft.ringtoneId) return r.name;
     }
-    return _draft.ringtoneId;
+    return _draft.ringtoneId == 'default'
+        ? 'Mặc định hệ thống'
+        : _draft.ringtoneId;
   }
 
   @override

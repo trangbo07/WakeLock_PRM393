@@ -24,10 +24,18 @@ class AppDatabase {
 
   Future<Database> _open() async {
     final path = p.join(await getDatabasesPath(), AppConstants.databaseFile);
-    return openDatabase(path, version: 1, onCreate: (db, _) => createSchema(db));
+    return openDatabase(
+      path,
+      version: 2,
+      onCreate: (db, _) => createSchema(db),
+      onUpgrade: (db, oldV, _) async {
+        // v2 added the custom_ringtones table.
+        if (oldV < 2) await _createCustomRingtones(db);
+      },
+    );
   }
 
-  /// Create the `alarms` table. Single source of the schema — reused by tests.
+  /// Create all tables. Single source of the schema — reused by tests.
   /// Booleans are stored as INTEGER 0/1; list/object fields as JSON TEXT.
   /// repeat_days: JSON int list, 1=Mon .. 7=Sun (DateTime.weekday values).
   static Future<void> createSchema(Database db) async {
@@ -44,6 +52,17 @@ class AppDatabase {
         volume_lock     INTEGER NOT NULL DEFAULT 1,
         escalate_volume INTEGER NOT NULL DEFAULT 1,
         dismiss_task    TEXT NOT NULL
+      )
+    ''');
+    await _createCustomRingtones(db);
+  }
+
+  /// User-added ringtones: `uri` is the absolute path of the copied audio file.
+  static Future<void> _createCustomRingtones(Database db) async {
+    await db.execute('''
+      CREATE TABLE ${AppConstants.customRingtonesTable} (
+        uri  TEXT PRIMARY KEY,
+        name TEXT NOT NULL
       )
     ''');
   }

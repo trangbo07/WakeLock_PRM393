@@ -84,27 +84,40 @@ Luồng end-to-end khi tới giờ:
 - flutter_local_notifications v22 dùng **named params** (`initialize(settings:)`,
   `show(id:title:body:notificationDetails:)`, `cancel(id:)`) — khác v9 cũ.
 
-## Nhạc chuông (assets)
+## Nhạc chuông (hệ thống + tự tải lên)
 
-**Code:** `features/ringtone/data/repositories/ringtone_repository_impl.dart`,
-`assets/ringtones/*.wav`
+**Code:** `android/.../SystemRingtones.kt`, `core/platform/system_ringtone_channel.dart`,
+`features/ringtone/*`
 
-14 file .wav tự sinh (22050Hz mono), loop liền mạch bằng `ReleaseMode.loop`.
-Tất cả là giai điệu tổng hợp gốc (KHÔNG dùng nhạc bản quyền):
-- Hiện đại/melodic: `marimba`, `melody`, `edm_pluck`, `lofi`, `arcade`,
-  `bass_drop` — dùng envelope ADSR + harmonic decay (pluck/marimba/EDM).
-- Cổ điển: `default` (beep 1kHz), `beep_slow`, `digital`, `chime`.
-- Hardcore tần số cao (khó ngủ tiếp, `highFrequency: true`): `siren`,
-  `nuclear`, `buzzer`, `pulse`.
-`RingtonePlayerService` strip prefix `assets/` vì `AssetSource` tính path từ
-gốc `assets/`. Script sinh lại (không commit — chỉ .wav commit):
-`scratchpad/generate_alarm_ringtones.py` (tone cơ bản),
-`scratchpad/generate_modern_ringtones.py` (tone hiện đại).
+KHÔNG nhúng audio nào trong app (tránh bản quyền). Hai nguồn:
+1. **Nhạc hệ thống Android thật:** native `SystemRingtones` (RingtoneManager,
+   TYPE_ALARM) liệt kê âm báo thức có sẵn trên máy (Argon, Cesium, ...).
+   `"default"` là sentinel = âm báo thức mặc định hệ thống. Channel
+   `wakelock/ringtones`: `list` / `preview(uri)` / `stopPreview` /
+   `startAlarm(uri,escalate)` / `stopAlarm`.
+2. **Nhạc người dùng tự tải:** nút "Thêm nhạc" trong picker → `file_picker`
+   (SAF audio) → copy file vào `<appDocs>/ringtones/` (path_provider) → lưu
+   metadata bảng SQLite `custom_ringtones` (schema v2). `uri` = đường dẫn file
+   tuyệt đối. Xóa được (xóa row + file).
 
-**Nghe thử (preview):** `RingtonePickerPage` (ConsumerStatefulWidget) giữ 1
-`AudioPlayer` riêng cho preview; nút play/stop mỗi dòng toggle `_playingId`;
-`onPlayerComplete` tự reset icon; chọn dòng → stop preview → pop id. Nhận
-`selectedId` qua route argument để hiện dấu ✓.
+`alarm.ringtoneId` lưu chính `uri` (content:// hoặc đường dẫn file hoặc
+`"default"`). Native `resolve()`: `"default"`/rỗng → default alarm URI; bắt đầu
+`/` → `Uri.fromFile`; còn lại → `Uri.parse`.
+
+**Phát khi reo:** `AlarmRingingPage` gọi `startAlarm(uri, escalate)` — native
+`Ringtone` loop trên STREAM_ALARM; escalate = ramp volume 30%→max mỗi 3s.
+Không dùng audioplayers nữa (đã gỡ dependency).
+
+**Nghe thử (preview):** picker gọi native `preview`/`stopPreview`. Channel
+reference được capture ở initState (`late final _channel`) để `dispose()` gọi
+được mà không đụng `ref` lúc widget bị finalize (Riverpod cấm — từng gây
+StateError). Nhận `selectedId` qua route argument để hiện dấu ✓ (nhạc hệ thống)
+hoặc nút xóa (nhạc tự tải).
+
+**Gotcha build:** `file_picker` compile với android-34 nhưng dependency khác cần
+36 → override `compileSdk=36` cho mọi library subproject trong
+`android/build.gradle.kts` (đăng ký `afterEvaluate` TRƯỚC block
+`evaluationDependsOn` để không lỗi "already evaluated").
 
 ## 4. Nhiệm vụ tắt báo thức
 

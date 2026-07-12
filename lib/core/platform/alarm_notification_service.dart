@@ -7,8 +7,8 @@ import '../constants/notification_channels.dart';
 /// The full-screen intent is what brings the ringing UI up over the lock
 /// screen: MainActivity has `showWhenLocked` + `turnScreenOn`, so posting this
 /// notification launches the activity even while locked. Sound is NOT played
-/// by the notification — `RingtonePlayerService` owns audio in the UI isolate
-/// so completing a task can actually stop it.
+/// by the notification — the ringing screen plays it natively (system
+/// RingtoneManager) so completing a task can actually stop it.
 ///
 /// All members are static because the background alarm isolate needs
 /// [showRinging] without any app wiring; [_ensureInitialized] makes each

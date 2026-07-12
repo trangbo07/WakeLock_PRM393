@@ -6,7 +6,9 @@ plugins {
 
 android {
     namespace = "com.prm393.wakelock_prm393"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned to 36: newer plugins (file_picker/path_provider deps) require a
+    // higher compileSdk than Flutter's default.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
