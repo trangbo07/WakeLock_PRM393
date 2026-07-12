@@ -1,7 +1,9 @@
 package com.prm393.wakelock_prm393
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
+import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
@@ -22,6 +24,25 @@ class MainActivity : FlutterActivity() {
         get() = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     private val systemRingtones by lazy { SystemRingtones(applicationContext) }
+
+    /// UUID of the alarm whose ring notification launched us (full-screen
+    /// intent), read once by Flutter to route to the dismiss screen.
+    private var launchAlarmId: String? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        launchAlarmId = intent?.getStringExtra(AlarmSoundService.extraAlarmId)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(AlarmSoundService.extraAlarmId)?.let { launchAlarmId = it }
+    }
+
+    private fun stopRinging() {
+        stopService(Intent(this, AlarmSoundService::class.java))
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -48,6 +69,14 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "list" -> result.success(systemRingtones.list())
                     "defaultAlarmUri" -> result.success(systemRingtones.defaultAlarmUri())
+                    "consumeLaunchAlarmId" -> {
+                        result.success(launchAlarmId)
+                        launchAlarmId = null
+                    }
+                    "stopRinging" -> {
+                        stopRinging()
+                        result.success(null)
+                    }
                     "preview" -> {
                         systemRingtones.preview(call.argument("uri"))
                         result.success(null)

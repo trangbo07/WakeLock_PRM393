@@ -59,6 +59,16 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- Native alarm ring: receiver started by the background isolate's
+             broadcast, which starts the looping-sound foreground service. -->
+        <receiver
+            android:name=".AlarmReceiver"
+            android:exported="false"/>
+        <service
+            android:name=".AlarmSoundService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false"/>
+
         <!-- flutter_foreground_task: anti-kill service kept alive while ringing.
              Do not rename — the plugin looks up this exact class. -->
         <service

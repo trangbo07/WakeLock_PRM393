@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/platform/alarm_notification_service.dart';
-import '../../../../core/platform/alarm_scheduler.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../../../core/utils/logger.dart';
@@ -11,13 +9,13 @@ import '../../../ringtone/presentation/providers/ringtone_providers.dart';
 import '../../../task/domain/entities/task_result.dart';
 import '../../../task/presentation/task_runner_page.dart';
 
-/// Full-screen, hard-to-escape ringing screen.
+/// Full-screen, hard-to-escape dismiss screen.
 ///
-/// Owns the whole "alarm is ringing" lifecycle in the UI isolate:
-/// start looping ringtone (+ escalation), pin volume via the native channel,
-/// and tear everything down only when the dismiss task succeeds. [PopScope]
-/// blocks the back button; the screen appears over the lock screen thanks to
-/// the full-screen-intent notification + showWhenLocked on MainActivity.
+/// The looping alarm sound is played by the native [AlarmSoundService], so it
+/// keeps ringing even if this screen is closed — the screen is the dismiss UI.
+/// It pins/locks the volume and keeps the screen on (via the volume channel's
+/// window flags), blocks Back ([PopScope]), and stops the ring service only
+/// when the dismiss task succeeds.
 class AlarmRingingPage extends ConsumerStatefulWidget {
   const AlarmRingingPage({super.key, required this.alarm});
 
@@ -28,35 +26,19 @@ class AlarmRingingPage extends ConsumerStatefulWidget {
 }
 
 class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
-  // Captured in initState so dispose() can stop the sound without touching
-  // `ref` during widget-tree finalization (Riverpod forbids that).
+  // Captured in initState so teardown can use it without touching `ref` during
+  // widget-tree finalization (Riverpod forbids that).
   late final _ringtoneChannel = ref.read(systemRingtoneChannelProvider);
 
   @override
   void initState() {
     super.initState();
-    _startRinging();
+    _lockDown();
   }
 
-  // System sounds (content://) are played by the insistent notification, which
-  // already started at fire time. A custom file (app-private path) can't play
-  // there, so this screen plays it itself.
-  bool get _soundHandledByNotification =>
-      widget.alarm.ringtoneId.startsWith('content://');
-
-  /// Every platform call is guarded: a missing plugin (tests) or a failing
-  /// native channel must never prevent the screen itself from showing.
-  Future<void> _startRinging() async {
-    if (!_soundHandledByNotification) {
-      try {
-        await _ringtoneChannel.startAlarm(
-          widget.alarm.ringtoneId,
-          escalate: widget.alarm.escalateVolume,
-        );
-      } catch (e) {
-        AppLogger.e('Ringtone playback failed: $e');
-      }
-    }
+  /// Pin the volume + keep the screen on / over the keyguard. The sound itself
+  /// is already looping in the native service.
+  Future<void> _lockDown() async {
     if (widget.alarm.volumeLock) {
       try {
         await ref.read(volumeLockProvider).lockToMax();
@@ -64,43 +46,22 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
         AppLogger.w('Volume lock unavailable: $e');
       }
     }
-    // Anti-kill: keep this process alive so the alarm can't be silenced by the
-    // OS reclaiming memory mid-ring.
-    try {
-      await ref.read(foregroundServiceProvider).start();
-    } catch (e) {
-      AppLogger.w('Foreground service start failed: $e');
-    }
   }
 
-  /// Tear down sound + volume lock + notification. Fire-and-forget so closing
-  /// the screen never waits on native round-trips (each call is guarded so a
-  /// missing plugin can't strand the user). Started before pop while `ref` is
-  /// still valid; `_player` teardown also happens in [dispose].
+  /// Stop the ring service + release the volume lock. Only called once the
+  /// dismiss task succeeds — leaving the screen otherwise keeps it ringing.
   void _teardown() {
     final volumeLock = widget.alarm.volumeLock ? ref.read(volumeLockProvider) : null;
-    final foregroundService = ref.read(foregroundServiceProvider);
-    final notifId = AlarmScheduler.stableId(widget.alarm.id);
     () async {
       try {
-        await _ringtoneChannel.stopAlarm();
+        await _ringtoneChannel.stopRinging();
       } catch (e) {
-        AppLogger.w('Alarm sound stop failed: $e');
+        AppLogger.w('Stop ringing failed: $e');
       }
       try {
         await volumeLock?.unlock();
       } catch (e) {
         AppLogger.w('Volume unlock unavailable: $e');
-      }
-      try {
-        await foregroundService.stop();
-      } catch (e) {
-        AppLogger.w('Foreground service stop failed: $e');
-      }
-      try {
-        await AlarmNotificationService.cancel(notifId);
-      } catch (e) {
-        AppLogger.w('Notification cancel failed: $e');
       }
     }();
   }
@@ -117,15 +78,6 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
       _teardown();
       if (Navigator.canPop(context)) Navigator.pop(context);
     }
-  }
-
-  @override
-  void dispose() {
-    // Safety net: stop the sound if the screen is torn down without dismiss.
-    _ringtoneChannel.stopAlarm().catchError((Object e) {
-      AppLogger.w('Alarm sound stop failed: $e');
-    });
-    super.dispose();
   }
 
   @override

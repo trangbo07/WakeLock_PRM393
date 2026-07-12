@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../core/constants/app_constants.dart';
-import '../core/platform/alarm_notification_service.dart';
 import '../core/utils/logger.dart';
 import '../features/alarm_management/domain/entities/alarm.dart';
 import '../features/alarm_management/presentation/providers/alarm_providers.dart';
+import '../features/ringtone/presentation/providers/ringtone_providers.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
 /// Root widget. Wires up theme + routing, and routes into the ringing screen
-/// when an alarm notification launched the app (full-screen intent) or was
-/// tapped while the app is running.
+/// when the native ring service's full-screen notification launched the app
+/// (its intent carries the alarm id, read via [SystemRingtoneChannel]).
 class WakeLockApp extends ConsumerStatefulWidget {
   const WakeLockApp({super.key});
 
@@ -19,21 +20,36 @@ class WakeLockApp extends ConsumerStatefulWidget {
   ConsumerState<WakeLockApp> createState() => _WakeLockAppState();
 }
 
-class _WakeLockAppState extends ConsumerState<WakeLockApp> {
+class _WakeLockAppState extends ConsumerState<WakeLockApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _wireAlarmLaunch();
+    WidgetsBinding.instance.addObserver(this);
+    // The ring service posts a foreground notification (Android 13+ needs this).
+    Permission.notification.request().ignore();
+    _checkRingingLaunch();
   }
 
-  Future<void> _wireAlarmLaunch() async {
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // The full-screen intent can bring us forward while already running.
+    if (state == AppLifecycleState.resumed) _checkRingingLaunch();
+  }
+
+  Future<void> _checkRingingLaunch() async {
     try {
-      await AlarmNotificationService.init(onAlarmTapped: _openRinging);
-      final launchId = await AlarmNotificationService.launchAlarmId();
-      if (launchId != null) await _openRinging(launchId);
+      final alarmId =
+          await ref.read(systemRingtoneChannelProvider).consumeLaunchAlarmId();
+      if (alarmId != null && alarmId.isNotEmpty) await _openRinging(alarmId);
     } catch (e) {
-      // Missing plugin on the test host must not break app startup.
-      AppLogger.w('Alarm notification wiring unavailable: $e');
+      AppLogger.w('Ringing launch check failed: $e');
     }
   }
 
@@ -55,6 +71,8 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _pushRinging(alarm));
       return;
     }
+    // Avoid stacking duplicate ringing screens if resumed repeatedly.
+    navigator.popUntil((r) => r.settings.name != AppRouter.alarmRinging);
     navigator.pushNamed(AppRouter.alarmRinging, arguments: alarm);
   }
 
