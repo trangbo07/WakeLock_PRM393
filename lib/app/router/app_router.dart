@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/alarm_management/domain/entities/alarm.dart';
 import '../../features/alarm_management/presentation/pages/alarm_edit_page.dart';
 import '../../features/alarm_management/presentation/pages/alarm_list_page.dart';
+import '../../features/alarm_ringing/presentation/pages/alarm_ringing_page.dart';
 import '../../features/ringtone/presentation/pages/ringtone_picker_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
@@ -11,8 +12,13 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 class AppRouter {
   AppRouter._();
 
+  /// Lets non-widget code (notification launch wiring in app.dart) navigate.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   static const String home = '/';
   static const String alarmEdit = '/alarm-edit';
+  static const String alarmRinging = '/ringing';
   static const String ringtonePicker = '/ringtones';
   static const String settings = '/settings';
 
@@ -23,6 +29,8 @@ class AppRouter {
       case alarmEdit:
         // Pass an Alarm as `arguments` to edit it; null creates a new one.
         return _page(AlarmEditPage(existing: settings.arguments as Alarm?));
+      case alarmRinging:
+        return _page(AlarmRingingPage(alarm: settings.arguments as Alarm));
       case ringtonePicker:
         return _page(const RingtonePickerPage());
       case AppRouter.settings:

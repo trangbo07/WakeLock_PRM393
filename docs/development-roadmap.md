@@ -19,12 +19,14 @@
 - [x] Check + xin quyền exact alarm khi lưu (`ensureExactAlarmPermission`)
 - [x] Gỡ seed demo trong `AppDatabase`
 
-## Phase 2 — Lên lịch & báo thức kêu
+## Phase 2 — Lên lịch & báo thức kêu ✅ (hoàn thành 2026-07-12)
 
 - [x] `AndroidAlarmManager.initialize()` trong bootstrap + map id ổn định (đã làm trong Phase 1)
-- [ ] `alarmCallback` khởi động foreground service + overlay + phát nhạc
-- [ ] `AlarmRingingPage` hiển thị full-screen qua full-screen intent
-- [ ] Reschedule sau reboot; xử lý báo thức lặp (next occurrence)
+- [x] `alarmFireHandler` (isolate nền) đọc SQLite + post notification full-screen + phát nhạc ở isolate chính
+- [x] `AlarmRingingPage` hiển thị full-screen qua full-screen intent (wire trong `app.dart`)
+- [x] Reschedule sau reboot (`rescheduleOnReboot` + receiver enabled); báo thức lặp tự schedule occurrence kế tiếp khi reo; one-shot tự tắt
+- [x] Nhạc chuông thật (.wav) trong `assets/ringtones/`
+- Ghi chú: foreground service chống-kill để Phase 4 (notification full-screen intent đã đủ để reo ở Phase 2)
 
 ## Phase 3 — Nhiệm vụ tắt báo thức
 
@@ -43,7 +45,7 @@
 ## Phase 5 — Hoàn thiện
 
 - [ ] Onboarding cấp quyền (settings page)
-- [ ] Kho nhạc chuông thật (assets/ringtones/)
+- [x] Kho nhạc chuông thật (assets/ringtones/ — .wav tự sinh, làm ở Phase 2)
 - [ ] Test tích hợp luồng báo thức
 - [ ] Đánh bóng UI/UX, dark theme
 

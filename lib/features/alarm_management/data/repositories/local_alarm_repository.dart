@@ -1,5 +1,6 @@
 import '../../../../core/platform/alarm_scheduler.dart';
 import '../../../../core/utils/date_time_utils.dart';
+import '../../../alarm_ringing/data/alarm_fire_handler.dart';
 import '../../domain/entities/alarm.dart';
 import '../../domain/repositories/alarm_repository.dart';
 import '../datasources/alarm_local_datasource.dart';
@@ -12,7 +13,7 @@ import '../models/alarm_model.dart';
 /// Persistence and OS scheduling are kept in sync here: every write that
 /// changes when/whether an alarm fires also (re)schedules or cancels it.
 /// Only the NEXT occurrence is scheduled; rescheduling repeating alarms after
-/// they fire happens in `alarmCallback` (see core/platform/alarm_scheduler.dart).
+/// they fire happens in `alarmFireHandler` (features/alarm_ringing/data/).
 class LocalAlarmRepository implements AlarmRepository {
   LocalAlarmRepository(this._local, this._scheduler);
 
@@ -55,6 +56,7 @@ class LocalAlarmRepository implements AlarmRepository {
           alarm.minute,
           alarm.repeatDays,
         ),
+        callback: alarmFireHandler,
       );
     } else {
       await _scheduler.cancel(intId);

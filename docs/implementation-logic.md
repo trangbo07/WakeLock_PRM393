@@ -48,7 +48,52 @@ khi thay đổi logic.
 
 ## 3. Luồng báo thức reo
 
-*(Phase 2 — sẽ cập nhật khi triển khai)*
+**Code:** `features/alarm_ringing/data/alarm_fire_handler.dart`,
+`core/platform/alarm_notification_service.dart`,
+`features/alarm_ringing/presentation/pages/alarm_ringing_page.dart`,
+`app/app.dart`
+
+Luồng end-to-end khi tới giờ:
+1. AndroidAlarmManager chạy `alarmFireHandler(firedIntId)` trong **isolate nền**
+   (không có widget tree/Riverpod). Handler đọc alarm từ SQLite trực tiếp.
+2. Map `firedIntId` → alarm bằng `findByFiredId` (quét `stableId` từng row —
+   scheduler chỉ biết int id, không biết UUID).
+3. One-shot → tự tắt (`setEnabled(false)`); lặp → schedule occurrence kế tiếp
+   ngay (vì mỗi lần chỉ schedule 1 lần — xem mục 2).
+4. Post notification full-screen intent (`AlarmNotificationService.showRinging`).
+   Notification KHÔNG phát tiếng (`playSound: false`) — âm thanh do
+   `RingtonePlayerService` ở isolate chính quản để task hoàn thành mới stop được.
+5. Full-screen intent + `showWhenLocked`/`turnScreenOn` (MainActivity) mở app
+   đè lên màn hình khóa. `app.dart` đọc `launchAlarmId()` lúc khởi động (hoặc
+   `onAlarmTapped` khi app đang chạy) → push `AlarmRingingPage`.
+6. `AlarmRingingPage` (isolate chính): phát nhạc + escalate + volume lock,
+   `PopScope(canPop:false)` chặn Back. Chỉ đóng khi `TaskRunnerPage` trả
+   `TaskResult.completed == true`.
+
+**Quyết định/gotcha:**
+- **Callback truyền từ ngoài vào scheduler:** `AlarmScheduler.scheduleOneShot`
+  nhận `callback` param thay vì import handler — giữ `core/` không phụ thuộc
+  `features/`. Callback phải là top-level + `@pragma('vm:entry-point')`.
+- **Teardown fire-and-forget:** `_attemptDismiss` pop màn hình NGAY, không
+  `await` teardown (stop nhạc/unlock/cancel notif). Lý do: (1) UX đóng tức thì;
+  (2) trong widget test các Future MethodChannel không resolve trong
+  `pumpAndSettle` → nếu await sẽ không bao giờ pop. `ref` được đọc trước khi pop
+  (còn valid), phần async chạy sau. `dispose()` cũng dispose player.
+- Mọi lời gọi platform (audio/notif/volume) đều bọc try/catch — thiếu plugin
+  (test host) hoặc native lỗi không được làm kẹt người dùng trên màn hình reo.
+- flutter_local_notifications v22 dùng **named params** (`initialize(settings:)`,
+  `show(id:title:body:notificationDetails:)`, `cancel(id:)`) — khác v9 cũ.
+
+## Nhạc chuông (assets)
+
+**Code:** `features/ringtone/data/repositories/ringtone_repository_impl.dart`,
+`assets/ringtones/*.wav`
+
+3 file .wav tự sinh (22050Hz mono): `default` (beep 1kHz), `siren` (sweep
+600↔1400Hz), `nuclear` (two-tone 880/620Hz). Loop liền mạch bằng
+`ReleaseMode.loop`. `RingtonePlayerService` strip prefix `assets/` vì
+`AssetSource` tính path từ gốc `assets/`. Script sinh lại:
+`scratchpad/generate_alarm_ringtones.py` (không commit — chỉ .wav được commit).
 
 ## 4. Nhiệm vụ tắt báo thức
 

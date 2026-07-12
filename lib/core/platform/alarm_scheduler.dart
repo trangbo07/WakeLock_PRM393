@@ -3,9 +3,10 @@ import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 /// Wraps `android_alarm_manager_plus` to schedule exact, device-waking alarms
 /// that fire even if the app process was killed.
 ///
-/// The [alarmCallback] runs in a **separate background isolate** — it cannot
-/// touch the app's widget tree or Riverpod state directly. From there we start
-/// the foreground service + overlay window (see the hardcore feature flow).
+/// The fired [callback] runs in a **separate background isolate** — it cannot
+/// touch the app's widget tree or Riverpod state. The app-level handler lives
+/// in `features/alarm_ringing/data/alarm_fire_handler.dart` and is passed in
+/// by the repository, keeping core/ free of feature imports.
 class AlarmScheduler {
   /// Deterministic 31-bit positive int for AndroidAlarmManager derived from the
   /// alarm's UUID string (FNV-1a). NOT `String.hashCode`: that isn't guaranteed
@@ -20,14 +21,18 @@ class AlarmScheduler {
     return hash & 0x7FFFFFFF;
   }
 
-  /// Schedule a one-shot exact alarm at [when] identified by integer [id].
-  ///
-  /// [id] must come from [stableId] so it can be cancelled/rescheduled later.
-  Future<bool> scheduleOneShot(int id, DateTime when) {
+  /// Schedule a one-shot exact alarm at [when] identified by integer [id]
+  /// (from [stableId]). [callback] must be a top-level function annotated with
+  /// `@pragma('vm:entry-point')`.
+  Future<bool> scheduleOneShot(
+    int id,
+    DateTime when, {
+    required void Function(int) callback,
+  }) {
     return AndroidAlarmManager.oneShotAt(
       when,
       id,
-      alarmCallback,
+      callback,
       exact: true,
       wakeup: true,
       alarmClock: true,
@@ -36,15 +41,4 @@ class AlarmScheduler {
   }
 
   Future<bool> cancel(int id) => AndroidAlarmManager.cancel(id);
-}
-
-/// Top-level entry point executed in a background isolate when an alarm fires.
-///
-/// Keep it minimal and self-contained. TODO:
-///   1. Start [ForegroundServiceController] (anti-kill).
-///   2. Show the [OverlayService] ringing window over the lock screen.
-///   3. Start ringtone playback + volume lock.
-@pragma('vm:entry-point')
-void alarmCallback(int id) {
-  // TODO: trigger foreground service + overlay + ringtone for alarm [id].
 }
