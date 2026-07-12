@@ -19,22 +19,33 @@ class DismissTaskSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Single horizontal row; scrolls sideways when the chips overflow.
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final type in DismissTaskType.values)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
+        // All choices share one row (no horizontal scroll): equal-width,
+        // compact chips with small labels so five fit on screen.
+        Row(
+          children: [
+            for (final type in DismissTaskType.values)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4),
                   child: ChoiceChip(
-                    label: Text(type.label),
+                    label: Text(
+                      type.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11),
+                    ),
                     selected: value.type == type,
+                    showCheckmark: false,
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
                     onSelected: (_) => onChanged(value.copyWith(type: type)),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
         _buildParams(context),
