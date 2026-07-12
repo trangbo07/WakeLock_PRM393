@@ -26,7 +26,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
-        android:label="wakelock_prm393"
+        android:label="WakeLock"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
