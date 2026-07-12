@@ -2,6 +2,7 @@ import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'config/env.dart';
 import 'database/app_database.dart';
 import 'platform/foreground_service.dart';
 import 'utils/logger.dart';
@@ -24,6 +25,7 @@ Future<void> bootstrap() async {
   } catch (_) {
     AppLogger.w('.env not found — Gemini object recognition disabled');
   }
+  AppLogger.i('Gemini object recognition: ${Env.hasGemini ? 'enabled' : 'disabled'}');
 
   try {
     await AppDatabase.instance.database;
