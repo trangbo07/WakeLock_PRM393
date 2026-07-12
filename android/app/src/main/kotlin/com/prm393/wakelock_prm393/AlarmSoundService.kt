@@ -27,6 +27,13 @@ class AlarmSoundService : Service() {
 
         private const val channelId = "wakelock_alarm_ring"
         private const val notificationId = 91234
+
+        /// UUID of the alarm currently ringing (null when nothing is ringing).
+        /// Lets the app re-open the dismiss screen even if the user swiped the
+        /// notification away — the alarm keeps ringing until the task is done.
+        @Volatile
+        var currentAlarmId: String? = null
+            private set
     }
 
     private val ringtones by lazy { SystemRingtones(applicationContext) }
@@ -44,12 +51,14 @@ class AlarmSoundService : Service() {
         val label = intent?.getStringExtra(extraLabel) ?: "Báo thức"
         val alarmId = intent?.getStringExtra(extraAlarmId) ?: ""
 
+        currentAlarmId = alarmId
         startForeground(notificationId, buildNotification(label, alarmId))
         ringtones.startAlarm(soundUri, escalate)
         return START_STICKY
     }
 
     private fun stopEverything() {
+        currentAlarmId = null
         ringtones.stopAlarm()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -61,6 +70,7 @@ class AlarmSoundService : Service() {
     }
 
     override fun onDestroy() {
+        currentAlarmId = null
         ringtones.stopAlarm()
         super.onDestroy()
     }

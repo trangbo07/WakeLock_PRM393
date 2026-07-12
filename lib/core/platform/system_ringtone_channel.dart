@@ -35,11 +35,13 @@ class SystemRingtoneChannel {
 
   Future<void> stopPreview() => _channel.invokeMethod('stopPreview');
 
-  /// UUID of the alarm whose ring notification launched the app (full-screen
-  /// intent), consumed once. Null on a normal launch.
-  Future<String?> consumeLaunchAlarmId() async {
+  /// UUID of the alarm currently ringing (the ring service is active), or null.
+  /// The app checks this on start/resume so opening the app while an alarm
+  /// rings always returns to the dismiss screen — even if the user swiped the
+  /// notification away.
+  Future<String?> currentRingingAlarmId() async {
     try {
-      return _channel.invokeMethod<String>('consumeLaunchAlarmId');
+      return _channel.invokeMethod<String>('currentRingingAlarmId');
     } catch (_) {
       return null;
     }

@@ -80,6 +80,8 @@ class MainActivity : FlutterActivity() {
                         result.success(launchAlarmId)
                         launchAlarmId = null
                     }
+                    "currentRingingAlarmId" ->
+                        result.success(AlarmSoundService.currentAlarmId)
                     "stopRinging" -> {
                         stopRinging()
                         result.success(null)

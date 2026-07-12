@@ -23,6 +23,10 @@ class WakeLockApp extends ConsumerStatefulWidget {
 
 class _WakeLockAppState extends ConsumerState<WakeLockApp>
     with WidgetsBindingObserver {
+  // True while the dismiss screen is on the stack, so a resume (e.g. returning
+  // from the camera) doesn't stack a second one.
+  bool _ringingVisible = false;
+
   @override
   void initState() {
     super.initState();
@@ -47,14 +51,22 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // The full-screen intent can bring us forward while already running.
-    if (state == AppLifecycleState.resumed) _checkRingingLaunch();
+    if (state == AppLifecycleState.resumed) {
+      // The full-screen intent can bring us forward while already running.
+      _checkRingingLaunch();
+      // An alarm that fired (and a one-shot that self-disabled) while we were
+      // backgrounded means the list may be stale — refresh it.
+      ref.invalidate(alarmListProvider);
+    }
   }
 
   Future<void> _checkRingingLaunch() async {
     try {
+      // If an alarm is actively ringing, always return to the dismiss screen —
+      // works even when the notification was dismissed or the app was reopened
+      // from the launcher.
       final alarmId =
-          await ref.read(systemRingtoneChannelProvider).consumeLaunchAlarmId();
+          await ref.read(systemRingtoneChannelProvider).currentRingingAlarmId();
       if (alarmId != null && alarmId.isNotEmpty) await _openRinging(alarmId);
     } catch (e) {
       AppLogger.w('Ringing launch check failed: $e');
@@ -62,6 +74,7 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
   }
 
   Future<void> _openRinging(String alarmId) async {
+    if (_ringingVisible) return; // already showing the dismiss screen
     final alarm =
         await ref.read(alarmRepositoryProvider).getAlarmById(alarmId);
     if (alarm == null) {
@@ -72,16 +85,20 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
   }
 
   /// The navigator may not exist yet on the very first frame — retry after the
-  /// frame instead of dropping the launch.
+  /// frame instead of dropping the launch. The pushNamed future completes when
+  /// the dismiss screen is popped (task done), clearing the guard flag.
   void _pushRinging(Alarm alarm) {
     final navigator = AppRouter.navigatorKey.currentState;
     if (navigator == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _pushRinging(alarm));
       return;
     }
-    // Avoid stacking duplicate ringing screens if resumed repeatedly.
-    navigator.popUntil((r) => r.settings.name != AppRouter.alarmRinging);
-    navigator.pushNamed(AppRouter.alarmRinging, arguments: alarm);
+    _ringingVisible = true;
+    navigator.pushNamed(AppRouter.alarmRinging, arguments: alarm).whenComplete(() {
+      _ringingVisible = false;
+      // A one-shot that just rang is now disabled — refresh the list toggle.
+      ref.invalidate(alarmListProvider);
+    });
   }
 
   @override
