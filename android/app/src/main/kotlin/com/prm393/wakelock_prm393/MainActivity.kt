@@ -3,6 +3,7 @@ package com.prm393.wakelock_prm393
 import android.content.Context
 import android.media.AudioManager
 import android.view.KeyEvent
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -30,10 +31,12 @@ class MainActivity : FlutterActivity() {
                     "lockToMax" -> {
                         volumeLocked = true
                         pinAlarmVolumeToMax()
+                        runOnUiThread { setRingingWindowFlags(true) }
                         result.success(null)
                     }
                     "unlock" -> {
                         volumeLocked = false
+                        runOnUiThread { setRingingWindowFlags(false) }
                         result.success(null)
                     }
                     else -> result.notImplemented()
@@ -44,6 +47,7 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "list" -> result.success(systemRingtones.list())
+                    "defaultAlarmUri" -> result.success(systemRingtones.defaultAlarmUri())
                     "preview" -> {
                         systemRingtones.preview(call.argument("uri"))
                         result.success(null)
@@ -71,6 +75,18 @@ class MainActivity : FlutterActivity() {
     private fun pinAlarmVolumeToMax() {
         val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         audioManager.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
+    }
+
+    /**
+     * While ringing: keep the screen on and force the activity above the
+     * keyguard so the alarm can't be hidden away. Cleared on unlock.
+     */
+    private fun setRingingWindowFlags(ringing: Boolean) {
+        val flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+        if (ringing) window.addFlags(flags) else window.clearFlags(flags)
     }
 
     /**

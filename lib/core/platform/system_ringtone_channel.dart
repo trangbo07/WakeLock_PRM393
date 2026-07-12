@@ -20,6 +20,17 @@ class SystemRingtoneChannel {
         .toList(growable: false);
   }
 
+  /// The system default alarm sound as a concrete content:// URI (or '' if
+  /// unavailable / non-Android). Used to resolve the 'default' sentinel to a
+  /// URI the notification can actually play.
+  Future<String> defaultAlarmUri() async {
+    try {
+      return (await _channel.invokeMethod<String>('defaultAlarmUri')) ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   Future<void> preview(String uri) =>
       _channel.invokeMethod('preview', {'uri': uri});
 

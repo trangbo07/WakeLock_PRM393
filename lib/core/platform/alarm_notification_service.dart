@@ -1,18 +1,21 @@
+import 'dart:typed_data';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../constants/notification_channels.dart';
 
 /// Full-screen alarm notifications (flutter_local_notifications).
 ///
-/// The full-screen intent is what brings the ringing UI up over the lock
-/// screen: MainActivity has `showWhenLocked` + `turnScreenOn`, so posting this
-/// notification launches the activity even while locked. Sound is NOT played
-/// by the notification — the ringing screen plays it natively (system
-/// RingtoneManager) so completing a task can actually stop it.
+/// The notification does the ringing: it plays the alarm sound looping
+/// (FLAG_INSISTENT) on the alarm stream the moment it is posted from the
+/// background isolate — so the alarm rings automatically at the scheduled time
+/// WITHOUT the user having to tap it, whether the screen is locked or not.
+/// The full-screen intent additionally brings up the dismiss UI. Cancelling the
+/// notification (when the task is completed) stops the looping sound.
 ///
-/// All members are static because the background alarm isolate needs
-/// [showRinging] without any app wiring; [_ensureInitialized] makes each
-/// isolate initialize its own plugin instance exactly once.
+/// System sounds are content:// URIs and play here. A user's custom file (an
+/// app-private path) can't be read by the system notifier, so for those the
+/// notification stays silent and the ringing screen plays them instead.
 class AlarmNotificationService {
   AlarmNotificationService._();
 
@@ -24,9 +27,9 @@ class AlarmNotificationService {
     android: AndroidInitializationSettings('@mipmap/ic_launcher'),
   );
 
-  /// Main-isolate init. [onAlarmTapped] receives the alarm UUID when the user
-  /// taps the notification while the app is already running. Also asks for
-  /// POST_NOTIFICATIONS (Android 13+) — without it nothing is shown at all.
+  /// FLAG_INSISTENT — repeat the notification sound until it is cancelled.
+  static final Int32List _insistent = Int32List.fromList([4]);
+
   static Future<void> init({
     required void Function(String alarmId) onAlarmTapped,
   }) async {
@@ -50,8 +53,6 @@ class AlarmNotificationService {
     _initialized = true;
   }
 
-  /// Alarm UUID whose notification launched the app (full-screen intent or
-  /// tap), or null on a normal launch. Check once at startup.
   static Future<String?> launchAlarmId() async {
     final details = await _plugin.getNotificationAppLaunchDetails();
     if (details?.didNotificationLaunchApp ?? false) {
@@ -60,16 +61,25 @@ class AlarmNotificationService {
     return null;
   }
 
-  /// Post the ringing notification. [notificationId] is the alarm's stable
-  /// int id so the ringing page can cancel exactly this one.
+  /// Post the ringing notification. When [soundUri] is a content:// URI, the
+  /// notification plays it looping; otherwise it stays silent (custom file).
   static Future<void> showRinging({
     required int notificationId,
     required String alarmId,
     required String title,
+    required String soundUri,
   }) async {
     await _ensureInitialized();
-    const android = AndroidNotificationDetails(
-      NotificationChannels.alarmChannelId,
+
+    final playsSound = soundUri.startsWith('content://');
+    // A channel's sound is fixed at creation, so give each distinct sound its
+    // own channel; otherwise every alarm would reuse the first sound ever set.
+    final channelId = playsSound
+        ? 'wakelock_alarm_${soundUri.hashCode}'
+        : NotificationChannels.alarmChannelId;
+
+    final android = AndroidNotificationDetails(
+      channelId,
       NotificationChannels.alarmChannelName,
       channelDescription: 'Báo thức đang reo',
       importance: Importance.max,
@@ -77,7 +87,9 @@ class AlarmNotificationService {
       category: AndroidNotificationCategory.alarm,
       audioAttributesUsage: AudioAttributesUsage.alarm,
       fullScreenIntent: true,
-      playSound: false,
+      playSound: playsSound,
+      sound: playsSound ? UriAndroidNotificationSound(soundUri) : null,
+      additionalFlags: _insistent,
       ongoing: true,
       autoCancel: false,
     );
@@ -85,7 +97,7 @@ class AlarmNotificationService {
       id: notificationId,
       title: title,
       body: 'Hoàn thành nhiệm vụ để tắt báo thức',
-      notificationDetails: const NotificationDetails(android: android),
+      notificationDetails: NotificationDetails(android: android),
       payload: alarmId,
     );
   }

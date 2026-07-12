@@ -38,18 +38,24 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
     _startRinging();
   }
 
+  // System sounds (content://) are played by the insistent notification, which
+  // already started at fire time. A custom file (app-private path) can't play
+  // there, so this screen plays it itself.
+  bool get _soundHandledByNotification =>
+      widget.alarm.ringtoneId.startsWith('content://');
+
   /// Every platform call is guarded: a missing plugin (tests) or a failing
   /// native channel must never prevent the screen itself from showing.
   Future<void> _startRinging() async {
-    try {
-      // The device system sound (or the user's custom file) is played natively
-      // by RingtoneManager, looping on the alarm stream.
-      await _ringtoneChannel.startAlarm(
-        widget.alarm.ringtoneId,
-        escalate: widget.alarm.escalateVolume,
-      );
-    } catch (e) {
-      AppLogger.e('Ringtone playback failed: $e');
+    if (!_soundHandledByNotification) {
+      try {
+        await _ringtoneChannel.startAlarm(
+          widget.alarm.ringtoneId,
+          escalate: widget.alarm.escalateVolume,
+        );
+      } catch (e) {
+        AppLogger.e('Ringtone playback failed: $e');
+      }
     }
     if (widget.alarm.volumeLock) {
       try {

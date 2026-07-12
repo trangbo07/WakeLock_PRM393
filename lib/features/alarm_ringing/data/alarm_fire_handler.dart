@@ -41,6 +41,7 @@ Future<void> alarmFireHandler(int firedIntId) async {
       notificationId: firedIntId,
       alarmId: alarm.id,
       title: alarm.label.isEmpty ? 'Báo thức' : alarm.label,
+      soundUri: alarm.ringtoneId,
     );
   } catch (e) {
     AppLogger.e('alarmFireHandler failed: $e');

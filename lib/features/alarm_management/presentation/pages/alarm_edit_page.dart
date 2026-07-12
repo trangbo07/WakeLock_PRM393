@@ -80,6 +80,12 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
       );
       return;
     }
+    // Resolve the 'default' sentinel to a concrete system-alarm URI so the
+    // ringing notification can play it directly (it can't play 'default').
+    if (_draft.ringtoneId.isEmpty || _draft.ringtoneId == 'default') {
+      final uri = await ref.read(systemRingtoneChannelProvider).defaultAlarmUri();
+      if (uri.isNotEmpty) _draft = _draft.copyWith(ringtoneId: uri);
+    }
     await ref.read(alarmRepositoryProvider).upsertAlarm(_draft);
     if (mounted) Navigator.pop(context, true);
   }

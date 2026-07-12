@@ -56,19 +56,29 @@ khi thay đổi logic.
 Luồng end-to-end khi tới giờ:
 1. AndroidAlarmManager chạy `alarmFireHandler(firedIntId)` trong **isolate nền**
    (không có widget tree/Riverpod). Handler đọc alarm từ SQLite trực tiếp.
-2. Map `firedIntId` → alarm bằng `findByFiredId` (quét `stableId` từng row —
-   scheduler chỉ biết int id, không biết UUID).
-3. One-shot → tự tắt (`setEnabled(false)`); lặp → schedule occurrence kế tiếp
-   ngay (vì mỗi lần chỉ schedule 1 lần — xem mục 2).
-4. Post notification full-screen intent (`AlarmNotificationService.showRinging`).
-   Notification KHÔNG phát tiếng (`playSound: false`) — âm thanh do
-   `RingtonePlayerService` ở isolate chính quản để task hoàn thành mới stop được.
-5. Full-screen intent + `showWhenLocked`/`turnScreenOn` (MainActivity) mở app
-   đè lên màn hình khóa. `app.dart` đọc `launchAlarmId()` lúc khởi động (hoặc
-   `onAlarmTapped` khi app đang chạy) → push `AlarmRingingPage`.
-6. `AlarmRingingPage` (isolate chính): phát nhạc + escalate + volume lock,
-   `PopScope(canPop:false)` chặn Back. Chỉ đóng khi `TaskRunnerPage` trả
-   `TaskResult.completed == true`.
+2. Map `firedIntId` → alarm bằng `findByFiredId` (quét `stableId` từng row).
+3. One-shot → tự tắt; lặp → schedule occurrence kế tiếp ngay.
+4. Post notification (`AlarmNotificationService.showRinging`) — **CHÍNH thông báo
+   phát nhạc, lặp bằng FLAG_INSISTENT (0x4), ngay khi post từ isolate nền** →
+   báo thức TỰ KÊU đúng giờ, KHÔNG cần bấm, dù máy khóa hay mở. `ongoing:true`
+   (không vuốt bỏ được). Hủy thông báo (làm xong nhiệm vụ) mới dừng nhạc.
+   - Vì kênh native chỉ có ở engine chính (không ở isolate nền), không thể phát
+     nhạc native từ isolate nền → dùng notification sound là cách phát tự động
+     đáng tin duy nhất từ isolate nền.
+   - Sound của channel cố định lúc tạo → mỗi URI 1 channel riêng
+     (`wakelock_alarm_<hash>`).
+5. Full-screen intent + `showWhenLocked`/`turnScreenOn` mở `AlarmRingingPage`
+   (khi khóa tự bật; khi mở thì bấm thông báo — nhưng nhạc đã kêu sẵn).
+6. `AlarmRingingPage`: `PopScope(canPop:false)` chặn Back; volume lock + giữ màn
+   hình sáng + đè keyguard (window flags trong `MainActivity.setRingingWindowFlags`
+   qua kênh volume). Chỉ dừng nhạc khi `TaskRunnerPage` trả completed → teardown
+   (cancel notification + stopAlarm + unlock + stop service). Rời màn hình mà
+   chưa xong nhiệm vụ → thông báo vẫn kêu (escape-proof).
+
+**Nhạc hệ thống (content://)** phát qua notification (tự kêu). **File tùy chỉnh**
+(đường dẫn app-private, hệ thống không đọc được) → notification im, màn reo tự
+phát qua kênh native khi mở. `'default'` được resolve sang URI cụ thể lúc LƯU
+(`defaultAlarmUri`) để notification phát được.
 
 **Quyết định/gotcha:**
 - **Callback truyền từ ngoài vào scheduler:** `AlarmScheduler.scheduleOneShot`

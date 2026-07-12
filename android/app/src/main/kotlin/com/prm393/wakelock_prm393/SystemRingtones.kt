@@ -32,10 +32,16 @@ class SystemRingtones(private val context: Context) {
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
 
-    /** All alarm sounds on the device, default sentinel first. */
+    /** The system default alarm sound as a concrete content:// URI string. */
+    fun defaultAlarmUri(): String =
+        (RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_ALARM)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+            .toString()
+
+    /** All alarm sounds on the device, the default (concrete uri) first. */
     fun list(): List<Map<String, String>> {
         val result = mutableListOf(
-            mapOf("uri" to "default", "title" to "Mặc định hệ thống"),
+            mapOf("uri" to defaultAlarmUri(), "title" to "Mặc định hệ thống"),
         )
         val manager = RingtoneManager(context).apply { setType(RingtoneManager.TYPE_ALARM) }
         val cursor = manager.cursor

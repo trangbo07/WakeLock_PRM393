@@ -2,6 +2,7 @@
 // channels — exact-alarm permission is auto-granted off Android).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wakelock_prm393/features/alarm_management/domain/entities/alarm.dart';
@@ -31,6 +32,16 @@ class _FakeAlarmRepository implements AlarmRepository {
 
 void main() {
   late _FakeAlarmRepository fakeRepo;
+
+  // Answer the system-ringtone channel so _save()'s default-uri lookup resolves
+  // promptly instead of hanging on a missing plugin.
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('wakelock/ringtones'),
+      (call) async => call.method == 'list' ? <Map<String, String>>[] : '',
+    );
+  });
 
   Future<void> pumpEditPage(WidgetTester tester, {Alarm? existing}) async {
     // Tall logical viewport so the whole form (incl. save button) is on screen.
