@@ -2,7 +2,7 @@
 
 Ứng dụng báo thức "không thể trốn tránh" — báo thức cứng đầu buộc bạn phải hoàn thành nhiệm vụ mới tắt được.
 
-> Trạng thái: **Phase 1 hoàn thành** — tạo/sửa/xóa/bật-tắt báo thức hoạt động, lưu SQLite, lập lịch exact alarm thật. Luồng reo chuông (overlay + nhạc + nhiệm vụ) là Phase 2.
+> Trạng thái: **MVP hoàn chỉnh (Phase 1–5)** — tạo/sửa/xóa báo thức + lưu SQLite + lập lịch exact alarm; reo full-screen qua màn hình khóa với nhạc tăng dần + khóa volume (native) + foreground service chống-kill; 4 nhiệm vụ tắt (toán/lắc/QR/ảnh); màn cấp quyền. Xem tiến độ trong [`docs/development-roadmap.md`](docs/development-roadmap.md), logic từng phần trong [`docs/implementation-logic.md`](docs/implementation-logic.md).
 
 ## Tech stack
 
@@ -78,7 +78,7 @@ flutter test              # unit + widget test
 
 ## Việc cần làm tiếp (kick-off → MVP)
 
-Xem checklist chi tiết trong [`docs/development-roadmap.md`](docs/development-roadmap.md). Tóm tắt bước kế tiếp:
-- Viết body `alarmCallback` (foreground service + overlay + phát nhạc khi reo).
-- Viết native MethodChannel `wakelock/volume` trong `MainActivity.kt`.
-- Cấu hình `FlutterForegroundTask.init(...)` trong `bootstrap()`.
+MVP đã hoàn thành. Hướng mở rộng khả dĩ (chưa làm):
+- Nhận diện vật thể on-device cho nhiệm vụ chụp ảnh.
+- Snooze có giới hạn / thống kê thức dậy.
+- Kho nhạc chuông người dùng tự thêm.

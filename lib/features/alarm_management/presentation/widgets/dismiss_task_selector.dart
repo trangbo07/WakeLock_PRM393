@@ -14,14 +14,6 @@ class DismissTaskSelector extends StatelessWidget {
   final DismissTaskConfig value;
   final ValueChanged<DismissTaskConfig> onChanged;
 
-  static const Map<DismissTaskType, String> _typeLabels = {
-    DismissTaskType.none: 'Chạm tắt',
-    DismissTaskType.math: 'Giải toán',
-    DismissTaskType.shake: 'Lắc máy',
-    DismissTaskType.qrScan: 'Quét QR',
-    DismissTaskType.photo: 'Chụp ảnh',
-  };
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -30,11 +22,11 @@ class DismissTaskSelector extends StatelessWidget {
         Wrap(
           spacing: 6,
           children: [
-            for (final entry in _typeLabels.entries)
+            for (final type in DismissTaskType.values)
               ChoiceChip(
-                label: Text(entry.value),
-                selected: value.type == entry.key,
-                onSelected: (_) => onChanged(value.copyWith(type: entry.key)),
+                label: Text(type.label),
+                selected: value.type == type,
+                onSelected: (_) => onChanged(value.copyWith(type: type)),
               ),
           ],
         ),

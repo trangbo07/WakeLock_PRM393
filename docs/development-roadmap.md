@@ -42,12 +42,12 @@
 - [x] Foreground service cấu hình đầy đủ (init bootstrap + start/stop quanh lúc reo) + xin bỏ tối ưu pin trong Settings
 - [x] Tăng dần âm lượng + chặn giảm khi đang reo
 
-## Phase 5 — Hoàn thiện
+## Phase 5 — Hoàn thiện ✅ (hoàn thành 2026-07-12)
 
-- [ ] Onboarding cấp quyền (settings page)
+- [x] Onboarding cấp quyền (SettingsPage — trạng thái grant + nút cấp, làm ở Phase 4)
 - [x] Kho nhạc chuông thật (assets/ringtones/ — .wav tự sinh, làm ở Phase 2)
-- [ ] Test tích hợp luồng báo thức
-- [ ] Đánh bóng UI/UX, dark theme
+- [x] Test tích hợp luồng báo thức (LocalAlarmRepository + SQLite ffi in-memory + fake scheduler)
+- [x] Đánh bóng UI/UX: alarm list dạng card + loại nhiệm vụ + dim khi tắt, empty state có hướng dẫn
 
 ## Ghi chú kỹ thuật
 

@@ -14,18 +14,23 @@ class AppDatabase {
 
   static final AppDatabase instance = AppDatabase._();
 
+  /// Wrap an already-open [Database] (integration tests use an in-memory ffi
+  /// database created with [createSchema]).
+  factory AppDatabase.withDatabase(Database db) => AppDatabase._().._db = db;
+
   Database? _db;
 
   Future<Database> get database async => _db ??= await _open();
 
   Future<Database> _open() async {
     final path = p.join(await getDatabasesPath(), AppConstants.databaseFile);
-    return openDatabase(path, version: 1, onCreate: _onCreate);
+    return openDatabase(path, version: 1, onCreate: (db, _) => createSchema(db));
   }
 
-  Future<void> _onCreate(Database db, int version) async {
-    // Booleans are stored as INTEGER 0/1; list/object fields as JSON TEXT.
-    // repeat_days: JSON int list, 1=Mon .. 7=Sun (DateTime.weekday values).
+  /// Create the `alarms` table. Single source of the schema — reused by tests.
+  /// Booleans are stored as INTEGER 0/1; list/object fields as JSON TEXT.
+  /// repeat_days: JSON int list, 1=Mon .. 7=Sun (DateTime.weekday values).
+  static Future<void> createSchema(Database db) async {
     await db.execute('''
       CREATE TABLE ${AppConstants.alarmsTable} (
         id              TEXT PRIMARY KEY,

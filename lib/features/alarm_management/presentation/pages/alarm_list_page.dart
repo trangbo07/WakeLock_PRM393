@@ -27,7 +27,7 @@ class AlarmListPage extends ConsumerWidget {
       ),
       body: alarmsAsync.when(
         data: (alarms) => alarms.isEmpty
-            ? const Center(child: Text('Chưa có báo thức nào'))
+            ? const _EmptyState()
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(alarmListProvider),
                 child: ListView.builder(
@@ -60,6 +60,37 @@ class AlarmListPage extends ConsumerWidget {
           ref.invalidate(alarmListProvider);
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+/// Shown when there are no alarms yet — guides the user to the add button.
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.alarm_add,
+                size: 72, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(height: 16),
+            Text('Chưa có báo thức nào', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(
+              'Nhấn nút + để tạo báo thức đầu tiên mà bạn không thể trốn tránh.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

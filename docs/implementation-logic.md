@@ -166,3 +166,18 @@ theo type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task pa
 - **Gotcha test:** form dài hơn viewport mặc định của widget test (600px) —
   test phải set `tester.view.physicalSize` cao hoặc `ensureVisible` trước khi
   tap nút Lưu.
+
+## 7. Test tích hợp
+
+**Code:** `test/alarm_repository_integration_test.dart`
+
+- Dùng `sqflite_common_ffi` (dev dependency) chạy SQLite **thật in-memory** trên
+  máy dev, không cần emulator. `sqfliteFfiInit()` + `databaseFactoryFfi`.
+- Schema dùng chung qua `AppDatabase.createSchema(db)` (single source) +
+  `AppDatabase.withDatabase(db)` bọc DB đã mở cho `AlarmLocalDataSource`.
+- Scheduler được fake bằng subclass `AlarmScheduler` override
+  `scheduleOneShot`/`cancel` (ghi lại call, không đụng AndroidAlarmManager) —
+  không cần tách interface.
+- Cover: upsert persist + schedule; disable → cancel giữ row; re-enable →
+  schedule lại; delete → xóa + cancel; upsert 2 lần → update in-place (không
+  nhân đôi row, nhờ `ConflictAlgorithm.replace`).

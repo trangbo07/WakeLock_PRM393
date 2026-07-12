@@ -3,19 +3,24 @@ import 'package:equatable/equatable.dart';
 /// The kind of task a user must complete to silence a ringing alarm.
 enum DismissTaskType {
   /// Just tap to dismiss (easy mode).
-  none,
+  none('Chạm tắt'),
 
   /// Solve math problems.
-  math,
+  math('Giải toán'),
 
   /// Shake the phone N times.
-  shake,
+  shake('Lắc máy'),
 
   /// Scan a specific QR code (e.g. taped in the bathroom).
-  qrScan,
+  qrScan('Quét QR'),
 
   /// Take a photo of a target (e.g. a plant).
-  photo,
+  photo('Chụp ảnh');
+
+  const DismissTaskType(this.label);
+
+  /// Short Vietnamese label shown in pickers and the alarm list.
+  final String label;
 }
 
 /// Configuration for the chosen dismiss task. Only the fields relevant to
