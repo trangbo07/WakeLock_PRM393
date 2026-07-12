@@ -49,8 +49,24 @@
 - [x] Test tích hợp luồng báo thức (LocalAlarmRepository + SQLite ffi in-memory + fake scheduler)
 - [x] Đánh bóng UI/UX: alarm list dạng card + loại nhiệm vụ + dim khi tắt, empty state có hướng dẫn
 
+## Phase 6 — Hoàn thiện sau MVP ✅ (2026-07-12)
+
+- [x] Nhạc chuông hệ thống Android (RingtoneManager) + tự tải file (file_picker), nghe thử
+- [x] Gỡ nhiệm vụ QR; nhiệm vụ chụp ảnh nhận diện vật thể bằng Gemini (`.env` git-ignore)
+- [x] Luồng reo native: `AlarmSoundService` (foreground) phát nhạc LOOP bền, tự kêu, chống thoát
+- [x] Mở lại app lúc đang reo (kể cả đã xóa thông báo) → về màn tắt báo thức (`currentRingingAlarmId`)
+- [x] Refresh danh sách sau reo → toggle một-lần hiển thị đúng
+- [x] Chi tiết: xem `docs/project-changelog.md` mục 2026-07-12
+
+## Hướng mở rộng (chưa làm)
+
+- [ ] Nhạc tự tải cũng tự kêu qua thông báo (cần đưa file ra vùng dùng chung/MediaStore)
+- [ ] Snooze có giới hạn / thống kê thức dậy
+- [ ] Reschedule đầy đủ sau reboot cho báo thức lặp
+
 ## Ghi chú kỹ thuật
 
 - Dùng `dart analyze` thay `flutter analyze` (LSP server crash với đường dẫn Unicode "Máy tính").
 - iOS đã loại bỏ — tính năng hardcore không khả thi trên iOS.
 - 2026-07-12: bỏ Supabase, chuyển sang SQLite local-only (`sqflite`) — báo thức là dữ liệu per-device, isolate nền phải đọc offline; xem `plans/260712-1659-migrate-supabase-to-sqlite/plan.md`.
+- Test firing bằng cách nhảy đồng hồ hệ thống dễ làm emulator bất ổn — đặt giờ thật cách 1–2 phút rồi chờ là ổn nhất.
