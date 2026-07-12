@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -28,6 +29,13 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
     WidgetsBinding.instance.addObserver(this);
     // The ring service posts a foreground notification (Android 13+ needs this).
     Permission.notification.request().ignore();
+    // Native pushes the alarm id here when a ring notification is tapped / its
+    // full-screen intent fires while the app is already running.
+    const MethodChannel('wakelock/ringtones').setMethodCallHandler((call) async {
+      if (call.method == 'launchRinging' && call.arguments is String) {
+        await _openRinging(call.arguments as String);
+      }
+    });
     _checkRingingLaunch();
   }
 

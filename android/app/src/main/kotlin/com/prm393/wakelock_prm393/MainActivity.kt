@@ -26,8 +26,10 @@ class MainActivity : FlutterActivity() {
     private val systemRingtones by lazy { SystemRingtones(applicationContext) }
 
     /// UUID of the alarm whose ring notification launched us (full-screen
-    /// intent), read once by Flutter to route to the dismiss screen.
+    /// intent) on a cold start, pulled once by Flutter to route to the dismiss
+    /// screen. When we're already running, we push it instead (see below).
     private var launchAlarmId: String? = null
+    private var ringtoneChannel: MethodChannel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +39,11 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        intent.getStringExtra(AlarmSoundService.extraAlarmId)?.let { launchAlarmId = it }
+        // Already running (notification tap / full-screen intent) — push the id
+        // to Flutter so it opens the dismiss screen even when foreground.
+        intent.getStringExtra(AlarmSoundService.extraAlarmId)?.let { id ->
+            runOnUiThread { ringtoneChannel?.invokeMethod("launchRinging", id) }
+        }
     }
 
     private fun stopRinging() {
@@ -64,7 +70,8 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ringtoneChannelName)
+        ringtoneChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ringtoneChannelName)
+        ringtoneChannel!!
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "list" -> result.success(systemRingtones.list())
