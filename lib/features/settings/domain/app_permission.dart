@@ -26,7 +26,7 @@ enum AppPermission {
   ),
   camera(
     'Máy ảnh',
-    'Dùng cho nhiệm vụ quét QR / chụp ảnh để tắt báo thức',
+    'Dùng cho nhiệm vụ chụp ảnh để tắt báo thức',
     Permission.camera,
   );
 

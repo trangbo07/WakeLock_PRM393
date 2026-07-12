@@ -82,7 +82,6 @@ class _TaskChip extends StatelessWidget {
     DismissTaskType.none: Icons.touch_app,
     DismissTaskType.math: Icons.calculate,
     DismissTaskType.shake: Icons.vibration,
-    DismissTaskType.qrScan: Icons.qr_code_scanner,
     DismissTaskType.photo: Icons.camera_alt,
   };
 

@@ -77,7 +77,6 @@ class AlarmModel extends Alarm {
       ),
       difficulty: (json['difficulty'] as num?)?.toInt() ?? 3,
       shakeCount: (json['shake_count'] as num?)?.toInt() ?? 50,
-      qrPayload: json['qr_payload'] as String?,
       photoTag: json['photo_tag'] as String?,
     );
   }
@@ -86,7 +85,6 @@ class AlarmModel extends Alarm {
         'type': c.type.name,
         'difficulty': c.difficulty,
         'shake_count': c.shakeCount,
-        'qr_payload': c.qrPayload,
         'photo_tag': c.photoTag,
       };
 }

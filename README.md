@@ -2,7 +2,7 @@
 
 Ứng dụng báo thức "không thể trốn tránh" — báo thức cứng đầu buộc bạn phải hoàn thành nhiệm vụ mới tắt được.
 
-> Trạng thái: **MVP hoàn chỉnh (Phase 1–5)** — tạo/sửa/xóa báo thức + lưu SQLite + lập lịch exact alarm; reo full-screen qua màn hình khóa với nhạc tăng dần + khóa volume (native) + foreground service chống-kill; 4 nhiệm vụ tắt (toán/lắc/QR/ảnh); màn cấp quyền. Xem tiến độ trong [`docs/development-roadmap.md`](docs/development-roadmap.md), logic từng phần trong [`docs/implementation-logic.md`](docs/implementation-logic.md).
+> Trạng thái: **MVP hoàn chỉnh (Phase 1–5)** — tạo/sửa/xóa báo thức + lưu SQLite + lập lịch exact alarm; reo full-screen qua màn hình khóa với nhạc tăng dần + khóa volume (native) + foreground service chống-kill; 3 nhiệm vụ tắt (toán/lắc/ảnh); màn cấp quyền. Xem tiến độ trong [`docs/development-roadmap.md`](docs/development-roadmap.md), logic từng phần trong [`docs/implementation-logic.md`](docs/implementation-logic.md).
 
 ## Tech stack
 
@@ -63,11 +63,16 @@ Xem thêm: [`docs/system-architecture.md`](docs/system-architecture.md), [`docs/
    ```bash
    flutter pub get
    ```
-2. Chạy trên thiết bị/emulator Android:
+2. Cấu hình khóa Gemini (tùy chọn — cho nhiệm vụ nhận diện vật thể khi chụp ảnh):
+   ```bash
+   cp .env.example .env   # rồi dán GEMINI_API_KEY vào .env
+   ```
+   > `.env` đã được git-ignore (không commit khóa). Bỏ trống khóa cũng chạy — nhiệm vụ chụp ảnh khi đó chấp nhận mọi ảnh.
+3. Chạy trên thiết bị/emulator Android:
    ```bash
    flutter run
    ```
-   > Không cần cấu hình gì thêm — database SQLite tự tạo trên máy. Máy Android 12+ sẽ hỏi quyền "Báo thức và lời nhắc" ở lần lưu báo thức đầu tiên.
+   > Database SQLite tự tạo trên máy. Máy Android 12+ sẽ hỏi quyền "Báo thức và lời nhắc" ở lần lưu báo thức đầu tiên.
 
 ## Kiểm tra chất lượng
 

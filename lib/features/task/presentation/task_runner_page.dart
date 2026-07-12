@@ -4,7 +4,6 @@ import '../domain/entities/dismiss_task.dart';
 import '../domain/entities/task_result.dart';
 import 'tasks/math_task_page.dart';
 import 'tasks/photo_task_page.dart';
-import 'tasks/qr_scan_task_page.dart';
 import 'tasks/shake_task_page.dart';
 
 /// Dispatches to the correct dismiss-task screen based on [config].
@@ -21,8 +20,6 @@ class TaskRunnerPage extends StatelessWidget {
         return MathTaskPage(config: config);
       case DismissTaskType.shake:
         return ShakeTaskPage(config: config);
-      case DismissTaskType.qrScan:
-        return QrScanTaskPage(config: config);
       case DismissTaskType.photo:
         return PhotoTaskPage(config: config);
       case DismissTaskType.none:

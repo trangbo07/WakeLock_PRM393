@@ -1,5 +1,6 @@
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'database/app_database.dart';
 import 'platform/foreground_service.dart';
@@ -17,6 +18,12 @@ import 'utils/logger.dart';
 /// blanking the UI; repositories will surface the error to the alarm list.
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    AppLogger.w('.env not found — Gemini object recognition disabled');
+  }
 
   try {
     await AppDatabase.instance.database;

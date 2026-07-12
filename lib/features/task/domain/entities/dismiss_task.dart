@@ -11,9 +11,6 @@ enum DismissTaskType {
   /// Shake the phone N times.
   shake('Lắc máy'),
 
-  /// Scan a specific QR code (e.g. taped in the bathroom).
-  qrScan('Quét QR'),
-
   /// Take a photo of a target (e.g. a plant).
   photo('Chụp ảnh');
 
@@ -30,7 +27,6 @@ class DismissTaskConfig extends Equatable {
     this.type = DismissTaskType.math,
     this.difficulty = 3,
     this.shakeCount = 50,
-    this.qrPayload,
     this.photoTag,
   });
 
@@ -42,9 +38,6 @@ class DismissTaskConfig extends Equatable {
   /// shake: required number of shakes.
   final int shakeCount;
 
-  /// qrScan: expected decoded QR value.
-  final String? qrPayload;
-
   /// photo: expected label / hint for the target object.
   final String? photoTag;
 
@@ -55,18 +48,16 @@ class DismissTaskConfig extends Equatable {
     DismissTaskType? type,
     int? difficulty,
     int? shakeCount,
-    String? qrPayload,
     String? photoTag,
   }) {
     return DismissTaskConfig(
       type: type ?? this.type,
       difficulty: difficulty ?? this.difficulty,
       shakeCount: shakeCount ?? this.shakeCount,
-      qrPayload: qrPayload ?? this.qrPayload,
       photoTag: photoTag ?? this.photoTag,
     );
   }
 
   @override
-  List<Object?> get props => [type, difficulty, shakeCount, qrPayload, photoTag];
+  List<Object?> get props => [type, difficulty, shakeCount, photoTag];
 }

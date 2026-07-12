@@ -32,7 +32,7 @@
 
 - [x] Toán: `MathProblemGenerator` sinh đề theo độ khó, giải liên tiếp N câu
 - [x] Lắc máy: `ShakeDetector` + accelerometer (sensors_plus), đếm N lần lắc có progress
-- [x] Quét QR: MobileScanner v7, so khớp payload
+- [~] Quét QR: đã gỡ bỏ theo yêu cầu (2026-07-12)
 - [x] Chụp ảnh: image_picker/camera (nhận diện vật thể để tương lai)
 
 ## Phase 4 — Tính năng hardcore ✅ (hoàn thành 2026-07-12)

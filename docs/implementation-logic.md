@@ -123,10 +123,13 @@ hoặc nút xóa (nhạc tự tải).
 
 **Code:** `features/task/presentation/tasks/*`, `features/task/domain/*`
 
-`DismissTaskConfig` (type + difficulty/shakeCount/qrPayload/photoTag) lưu JSON
-cột `dismiss_task`. UI chọn ở `DismissTaskSelector`. `TaskRunnerPage` dispatch
-theo type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task page có
+`DismissTaskConfig` (type + difficulty/shakeCount/photoTag) lưu JSON cột
+`dismiss_task`. UI chọn ở `DismissTaskSelector`. `TaskRunnerPage` dispatch theo
+type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task page có
 `automaticallyImplyLeading: false` (không cho thoát bằng nút back của AppBar).
+
+3 nhiệm vụ: toán / lắc / ảnh (QR đã gỡ theo yêu cầu 2026-07-12 — bỏ luôn
+`mobile_scanner`).
 
 - **Toán (`math_task_page`):** giải `difficulty` phép liên tiếp (difficulty vừa
   là số câu vừa là độ khó). Logic sinh đề tách ra `MathProblemGenerator`
@@ -138,12 +141,8 @@ theo type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task pa
   (`domain/shake_detector.dart`, pure, test bằng sample tổng hợp): 1 shake =
   magnitude vượt threshold 18 m/s² SAU khi đã lắng xuống dưới 60% threshold
   (re-arm) — tránh đếm nhiều lần cho 1 cú lắc. Đạt count → auto pop success.
-- **QR (`qr_scan_task_page`):** `mobile_scanner` v7 (`MobileScanner(onDetect:)`,
-  `capture.barcodes[].rawValue`). So khớp `qrPayload`; payload rỗng/null → mã
-  bất kỳ cũng đạt. Sai mã → hiện hint, tiếp tục quét.
-- **Ảnh (`photo_task_page`):** `image_picker` `pickImage(source: camera)`.
-  Chụp được ảnh bất kỳ = đạt; `photoTag` chỉ là gợi ý (nhận diện vật thể
-  on-device để tương lai). Hủy/không có camera → cho chụp lại.
+- **Ảnh (`photo_task_page`):** `image_picker` `pickImage(source: camera)` →
+  nhận diện vật thể bằng Gemini (xem mục 8). Hủy/không có camera → chụp lại.
 
 ## 5. Hardcore (volume lock / overlay / foreground service)
 
@@ -190,6 +189,23 @@ theo type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task pa
 - **Gotcha test:** form dài hơn viewport mặc định của widget test (600px) —
   test phải set `tester.view.physicalSize` cao hoặc `ensureVisible` trước khi
   tap nút Lưu.
+
+## 8. Nhận diện vật thể (Gemini) cho nhiệm vụ chụp ảnh
+
+**Code:** `features/task/data/gemini_vision_service.dart`,
+`features/task/presentation/tasks/photo_task_page.dart`, `core/config/env.dart`
+
+- Chụp ảnh (`image_picker`) → đọc bytes → `GeminiVisionService.matchesLabel`
+  gửi ảnh (base64 inline) + prompt tới Gemini REST
+  (`v1beta/models/gemini-3.1-flash-lite:generateContent`), hỏi ảnh có `photoTag`
+  không, ép trả lời YES/NO. Chứa "yes" → đạt; "no" → hiện lỗi + chụp lại.
+- **API key:** đọc từ `.env` (`GEMINI_API_KEY`) qua `flutter_dotenv` — file
+  `.env` GIT-IGNORED, KHÔNG commit key. `.env.example` là template. Model id để
+  ở 1 hằng `_defaultModel`, đổi 1 chỗ nếu API từ chối.
+- **Fail-open:** không có key / lỗi mạng / HTTP != 200 → coi như đạt (accept),
+  để sự cố hạ tầng không nhốt người dùng lúc 6h sáng. Chỉ "NO" rõ ràng mới chặn.
+- Không có `photoTag` → bỏ qua kiểm tra, ảnh nào cũng đạt.
+- Cần quyền INTERNET (đã khai báo trong Manifest).
 
 ## 7. Test tích hợp
 

@@ -22,7 +22,7 @@ void main() {
     expect(roundTrip(alarm), alarm);
   });
 
-  test('round-trips a disabled one-shot QR alarm with null-able fields', () {
+  test('round-trips a disabled one-shot photo alarm with null-able fields', () {
     const alarm = AlarmModel(
       id: 'a2',
       label: '',
@@ -33,14 +33,13 @@ void main() {
       volumeLock: false,
       escalateVolume: false,
       dismissTask: DismissTaskConfig(
-        type: DismissTaskType.qrScan,
-        qrPayload: 'bathroom',
+        type: DismissTaskType.photo,
+        photoTag: 'bồn rửa mặt',
       ),
     );
     final decoded = roundTrip(alarm);
     expect(decoded, alarm);
-    expect(decoded.dismissTask.qrPayload, 'bathroom');
-    expect(decoded.dismissTask.photoTag, isNull);
+    expect(decoded.dismissTask.photoTag, 'bồn rửa mặt');
     expect(decoded.repeatDays, isEmpty);
   });
 

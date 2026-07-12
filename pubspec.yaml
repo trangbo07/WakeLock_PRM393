@@ -43,7 +43,6 @@ dependencies:
   flutter_overlay_window: ^0.5.0
   flutter_foreground_task: ^9.2.2
   permission_handler: ^12.0.3
-  mobile_scanner: ^7.2.0
   image_picker: ^1.2.3
   sensors_plus: ^7.1.0
   equatable: ^2.1.0
@@ -53,6 +52,9 @@ dependencies:
   # Let users pick their own audio file as a custom ringtone.
   file_picker: ^8.1.7
   path_provider: ^2.1.5
+  # Gemini object recognition for the photo dismiss task.
+  http: ^1.2.2
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +81,10 @@ flutter:
   uses-material-design: true
   # No bundled audio: ringtones come from the device's system alarm sounds
   # (RingtoneManager) or files the user picks themselves.
+
+  assets:
+    # Gemini API key (git-ignored). Copy .env.example -> .env and fill it in.
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

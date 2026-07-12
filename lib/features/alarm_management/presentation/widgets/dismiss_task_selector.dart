@@ -60,16 +60,6 @@ class DismissTaskSelector extends StatelessWidget {
           divisions: 9,
           onChanged: (v) => onChanged(value.copyWith(shakeCount: v.round())),
         );
-      case DismissTaskType.qrScan:
-        return TextFormField(
-          key: const ValueKey('qr_payload'),
-          initialValue: value.qrPayload,
-          decoration: const InputDecoration(
-            labelText: 'Nội dung mã QR',
-            helperText: 'In mã QR và dán ở nơi bạn buộc phải đi tới (nhà tắm...)',
-          ),
-          onChanged: (s) => onChanged(value.copyWith(qrPayload: s)),
-        );
       case DismissTaskType.photo:
         return TextFormField(
           key: const ValueKey('photo_tag'),
