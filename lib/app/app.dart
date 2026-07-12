@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/utils/logger.dart';
 import '../features/alarm_management/domain/entities/alarm.dart';
 import '../features/alarm_management/presentation/providers/alarm_providers.dart';
 import '../features/ringtone/presentation/providers/ringtone_providers.dart';
+import '../features/settings/domain/permission_onboarding.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
@@ -31,8 +31,9 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // The ring service posts a foreground notification (Android 13+ needs this).
-    Permission.notification.request().ignore();
+    // First launch: ask for all hardcore permissions once (notification, exact
+    // alarm, overlay, battery, camera). Changeable later in Settings.
+    runFirstLaunchPermissionOnboarding();
     // Native pushes the alarm id here when a ring notification is tapped / its
     // full-screen intent fires while the app is already running.
     const MethodChannel('wakelock/ringtones').setMethodCallHandler((call) async {
