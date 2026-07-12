@@ -60,6 +60,15 @@ class DismissTaskSelector extends StatelessWidget {
           divisions: 9,
           onChanged: (v) => onChanged(value.copyWith(shakeCount: v.round())),
         );
+      case DismissTaskType.walk:
+        return _LabeledSlider(
+          label: 'Quãng đường: ${value.walkMeters} m',
+          value: value.walkMeters.toDouble(),
+          min: 10,
+          max: 200,
+          divisions: 19,
+          onChanged: (v) => onChanged(value.copyWith(walkMeters: v.round())),
+        );
       case DismissTaskType.photo:
         return TextFormField(
           key: const ValueKey('photo_tag'),

@@ -81,6 +81,7 @@ class AlarmModel extends Alarm {
       ),
       difficulty: (json['difficulty'] as num?)?.toInt() ?? 3,
       shakeCount: (json['shake_count'] as num?)?.toInt() ?? 50,
+      walkMeters: (json['walk_meters'] as num?)?.toInt() ?? 30,
       photoTag: json['photo_tag'] as String?,
     );
   }
@@ -89,6 +90,7 @@ class AlarmModel extends Alarm {
         'type': c.type.name,
         'difficulty': c.difficulty,
         'shake_count': c.shakeCount,
+        'walk_meters': c.walkMeters,
         'photo_tag': c.photoTag,
       };
 }

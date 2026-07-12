@@ -2,6 +2,12 @@
 
 Ghi các thay đổi quan trọng. Mới nhất ở trên. (Định dạng ngày: YYYY-MM-DD.)
 
+## 2026-07-12 (bổ sung tối 2)
+
+- **Nhiệm vụ "Đi bộ N mét"**: chọn khi tạo báo thức + nhập số mét (slider 10–200).
+  Lúc reo phải đi đủ số mét mới tắt được; đo bằng bước chân từ gia tốc
+  (`WalkDetector`, mét = bước × 0.75, có 5 unit test). Không thêm quyền/thư viện.
+
 ## 2026-07-12 (bổ sung tối)
 
 ### Hiệu ứng hardcore + chống gian lận đồng hồ + icon

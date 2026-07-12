@@ -5,6 +5,7 @@ import '../domain/entities/task_result.dart';
 import 'tasks/math_task_page.dart';
 import 'tasks/photo_task_page.dart';
 import 'tasks/shake_task_page.dart';
+import 'tasks/walk_task_page.dart';
 
 /// Dispatches to the correct dismiss-task screen based on [config].
 /// Each task page pops with a [TaskResult] when finished.
@@ -20,6 +21,8 @@ class TaskRunnerPage extends StatelessWidget {
         return MathTaskPage(config: config);
       case DismissTaskType.shake:
         return ShakeTaskPage(config: config);
+      case DismissTaskType.walk:
+        return WalkTaskPage(config: config);
       case DismissTaskType.photo:
         return PhotoTaskPage(config: config);
       case DismissTaskType.none:

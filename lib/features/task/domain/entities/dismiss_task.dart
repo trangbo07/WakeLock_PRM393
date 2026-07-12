@@ -11,6 +11,9 @@ enum DismissTaskType {
   /// Shake the phone N times.
   shake('Lắc máy'),
 
+  /// Walk a target distance (in meters) measured from step motion.
+  walk('Đi bộ'),
+
   /// Take a photo of a target (e.g. a plant).
   photo('Chụp ảnh');
 
@@ -27,6 +30,7 @@ class DismissTaskConfig extends Equatable {
     this.type = DismissTaskType.math,
     this.difficulty = 3,
     this.shakeCount = 50,
+    this.walkMeters = 30,
     this.photoTag,
   });
 
@@ -38,6 +42,9 @@ class DismissTaskConfig extends Equatable {
   /// shake: required number of shakes.
   final int shakeCount;
 
+  /// walk: target distance to walk, in meters.
+  final int walkMeters;
+
   /// photo: expected label / hint for the target object.
   final String? photoTag;
 
@@ -48,16 +55,19 @@ class DismissTaskConfig extends Equatable {
     DismissTaskType? type,
     int? difficulty,
     int? shakeCount,
+    int? walkMeters,
     String? photoTag,
   }) {
     return DismissTaskConfig(
       type: type ?? this.type,
       difficulty: difficulty ?? this.difficulty,
       shakeCount: shakeCount ?? this.shakeCount,
+      walkMeters: walkMeters ?? this.walkMeters,
       photoTag: photoTag ?? this.photoTag,
     );
   }
 
   @override
-  List<Object?> get props => [type, difficulty, shakeCount, photoTag];
+  List<Object?> get props =>
+      [type, difficulty, shakeCount, walkMeters, photoTag];
 }
