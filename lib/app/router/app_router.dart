@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/alarm_management/domain/entities/alarm.dart';
 import '../../features/alarm_management/presentation/pages/alarm_edit_page.dart';
 import '../../features/alarm_management/presentation/pages/alarm_list_page.dart';
 import '../../features/ringtone/presentation/pages/ringtone_picker_page.dart';
@@ -20,7 +21,8 @@ class AppRouter {
       case home:
         return _page(const AlarmListPage());
       case alarmEdit:
-        return _page(const AlarmEditPage());
+        // Pass an Alarm as `arguments` to edit it; null creates a new one.
+        return _page(AlarmEditPage(existing: settings.arguments as Alarm?));
       case ringtonePicker:
         return _page(const RingtonePickerPage());
       case AppRouter.settings:

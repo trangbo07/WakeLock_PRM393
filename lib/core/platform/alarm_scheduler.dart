@@ -7,10 +7,22 @@ import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 /// touch the app's widget tree or Riverpod state directly. From there we start
 /// the foreground service + overlay window (see the hardcore feature flow).
 class AlarmScheduler {
+  /// Deterministic 31-bit positive int for AndroidAlarmManager derived from the
+  /// alarm's UUID string (FNV-1a). NOT `String.hashCode`: that isn't guaranteed
+  /// stable across VM versions, and the id must survive app restarts/upgrades
+  /// so an existing alarm can still be cancelled or rescheduled.
+  static int stableId(String alarmId) {
+    var hash = 0x811c9dc5; // FNV-1a 32-bit offset basis
+    for (final unit in alarmId.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 0x01000193) & 0xFFFFFFFF; // FNV prime, keep 32 bits
+    }
+    return hash & 0x7FFFFFFF;
+  }
+
   /// Schedule a one-shot exact alarm at [when] identified by integer [id].
   ///
-  /// [id] must be a stable int derived from the alarm's UUID (e.g. hashCode)
-  /// so it can be cancelled/rescheduled later.
+  /// [id] must come from [stableId] so it can be cancelled/rescheduled later.
   Future<bool> scheduleOneShot(int id, DateTime when) {
     return AndroidAlarmManager.oneShotAt(
       when,

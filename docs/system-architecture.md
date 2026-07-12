@@ -19,6 +19,11 @@ AlarmEditPage → alarmRepositoryProvider (Riverpod)
              → AlarmScheduler.scheduleOneShot()  (android_alarm_manager_plus)
 ```
 
+Repository đồng bộ persist ↔ schedule: mỗi lần lưu/bật/tắt/xóa đều (re)schedule
+occurrence kế tiếp hoặc cancel (id int ổn định = FNV-1a từ UUID —
+`AlarmScheduler.stableId`). Lưu bị chặn nếu thiếu quyền exact alarm Android 12+
+(`core/platform/exact_alarm_permission.dart`).
+
 Toàn bộ dữ liệu nằm trên máy (`AppDatabase` — core/database/app_database.dart).
 Không có backend/sync: báo thức gắn với thiết bị, và bộ lập lịch chạy trong
 **isolate nền** lúc báo thức kêu (thường không có mạng) đọc thẳng SQLite —
@@ -46,7 +51,7 @@ DB được seed 3 báo thức demo khi tạo lần đầu (gỡ khi `AlarmEditP
 | `wakelock/volume` (MethodChannel) | Ghim max volume + nuốt phím volume-down | **Chưa viết native** |
 | `flutter_overlay_window` | Vẽ overlay trên lock screen | Plugin có sẵn, cần cấp quyền SYSTEM_ALERT_WINDOW |
 | `flutter_foreground_task` | Service chống tắt ngầm | Cần `init(...)` config trong bootstrap |
-| `android_alarm_manager_plus` | Lập lịch chính xác | Cần gọi `AndroidAlarmManager.initialize()` |
+| `android_alarm_manager_plus` | Lập lịch chính xác | Đã init trong bootstrap + service khai báo trong Manifest; body `alarmCallback` còn TODO (Phase 2) |
 
 ## Schema SQLite (bảng `alarms` — tạo trong `AppDatabase._onCreate`)
 

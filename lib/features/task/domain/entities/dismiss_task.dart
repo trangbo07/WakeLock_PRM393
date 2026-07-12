@@ -46,6 +46,22 @@ class DismissTaskConfig extends Equatable {
   static const DismissTaskConfig easy =
       DismissTaskConfig(type: DismissTaskType.none);
 
+  DismissTaskConfig copyWith({
+    DismissTaskType? type,
+    int? difficulty,
+    int? shakeCount,
+    String? qrPayload,
+    String? photoTag,
+  }) {
+    return DismissTaskConfig(
+      type: type ?? this.type,
+      difficulty: difficulty ?? this.difficulty,
+      shakeCount: shakeCount ?? this.shakeCount,
+      qrPayload: qrPayload ?? this.qrPayload,
+      photoTag: photoTag ?? this.photoTag,
+    );
+  }
+
   @override
   List<Object?> get props => [type, difficulty, shakeCount, qrPayload, photoTag];
 }

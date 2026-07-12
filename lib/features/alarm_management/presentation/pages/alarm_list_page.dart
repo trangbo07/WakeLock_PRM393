@@ -34,6 +34,14 @@ class AlarmListPage extends ConsumerWidget {
                   itemCount: alarms.length,
                   itemBuilder: (_, i) => AlarmTile(
                     alarm: alarms[i],
+                    onTap: () async {
+                      await Navigator.pushNamed(
+                        context,
+                        AppRouter.alarmEdit,
+                        arguments: alarms[i],
+                      );
+                      ref.invalidate(alarmListProvider);
+                    },
                     onToggle: (enabled) async {
                       await ref
                           .read(alarmRepositoryProvider)
@@ -47,7 +55,10 @@ class AlarmListPage extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Lỗi: $e')),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, AppRouter.alarmEdit),
+        onPressed: () async {
+          await Navigator.pushNamed(context, AppRouter.alarmEdit);
+          ref.invalidate(alarmListProvider);
+        },
         child: const Icon(Icons.add),
       ),
     );

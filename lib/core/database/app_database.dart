@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -43,49 +41,6 @@ class AppDatabase {
         dismiss_task    TEXT NOT NULL
       )
     ''');
-    await _seedDemoAlarms(db);
-  }
-
-  /// Seed data so the alarm list is viewable before AlarmEditPage has a real
-  /// form. Remove once creating alarms in-app works.
-  Future<void> _seedDemoAlarms(Database db) async {
-    final rows = <Map<String, Object?>>[
-      {
-        'id': '1',
-        'label': 'Dậy đi học',
-        'hour': 6,
-        'minute': 30,
-        'repeat_days': jsonEncode([1, 2, 3, 4, 5]),
-        'is_enabled': 1,
-        'ringtone_id': 'siren',
-        'dismiss_task': jsonEncode({'type': 'math', 'difficulty': 3}),
-      },
-      {
-        'id': '2',
-        'label': 'Uống nước',
-        'hour': 9,
-        'minute': 0,
-        'repeat_days': jsonEncode(<int>[]),
-        'is_enabled': 0,
-        'ringtone_id': 'default',
-        'dismiss_task': jsonEncode({'type': 'shake', 'shake_count': 50}),
-      },
-      {
-        'id': '3',
-        'label': 'Ngủ trưa dậy',
-        'hour': 13,
-        'minute': 15,
-        'repeat_days': jsonEncode([6, 7]),
-        'is_enabled': 1,
-        'ringtone_id': 'nuclear',
-        'dismiss_task': jsonEncode({'type': 'qrScan', 'qr_payload': 'bathroom'}),
-      },
-    ];
-    final batch = db.batch();
-    for (final row in rows) {
-      batch.insert(AppConstants.alarmsTable, row);
-    }
-    await batch.commit(noResult: true);
   }
 
   /// Close and reset the connection (tests / teardown).

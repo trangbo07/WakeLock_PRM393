@@ -11,16 +11,17 @@
 - [x] AndroidManifest permissions + minSdk 23 + desugaring
 - [x] `dart analyze` sạch, `flutter test` xanh
 
-## Phase 1 — Quản lý báo thức (MVP chuẩn)
+## Phase 1 — Quản lý báo thức (MVP chuẩn) ✅ (hoàn thành 2026-07-12)
 
 - [x] Database SQLite local (`AppDatabase`, bảng `alarms` — schema trong system-architecture.md; thay Supabase 2026-07-12)
-- [ ] Hoàn thiện `AlarmEditPage`: TimePicker, WeekdaySelector, tên, chọn nhạc chuông, chọn nhiệm vụ
-- [ ] Bật/tắt + xóa báo thức đồng bộ với scheduler
-- [ ] Gỡ seed demo trong `AppDatabase` khi form tạo báo thức hoạt động
+- [x] Hoàn thiện `AlarmEditPage`: TimePicker, WeekdaySelector, tên, chọn nhạc chuông, chọn nhiệm vụ + toggle rung/khóa volume/tăng âm
+- [x] Bật/tắt + xóa báo thức đồng bộ với scheduler (`LocalAlarmRepository._syncSchedule`, id ổn định FNV-1a)
+- [x] Check + xin quyền exact alarm khi lưu (`ensureExactAlarmPermission`)
+- [x] Gỡ seed demo trong `AppDatabase`
 
 ## Phase 2 — Lên lịch & báo thức kêu
 
-- [ ] `AndroidAlarmManager.initialize()` trong bootstrap + map id ổn định
+- [x] `AndroidAlarmManager.initialize()` trong bootstrap + map id ổn định (đã làm trong Phase 1)
 - [ ] `alarmCallback` khởi động foreground service + overlay + phát nhạc
 - [ ] `AlarmRingingPage` hiển thị full-screen qua full-screen intent
 - [ ] Reschedule sau reboot; xử lý báo thức lặp (next occurrence)

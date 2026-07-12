@@ -2,7 +2,7 @@
 
 Ứng dụng báo thức "không thể trốn tránh" — báo thức cứng đầu buộc bạn phải hoàn thành nhiệm vụ mới tắt được.
 
-> Trạng thái: **Kick-off scaffold** — cấu trúc code base + tích hợp thư viện đã sẵn sàng. Logic tính năng còn ở dạng `TODO`.
+> Trạng thái: **Phase 1 hoàn thành** — tạo/sửa/xóa/bật-tắt báo thức hoạt động, lưu SQLite, lập lịch exact alarm thật. Luồng reo chuông (overlay + nhạc + nhiệm vụ) là Phase 2.
 
 ## Tech stack
 
@@ -67,7 +67,7 @@ Xem thêm: [`docs/system-architecture.md`](docs/system-architecture.md), [`docs/
    ```bash
    flutter run
    ```
-   > Không cần cấu hình gì thêm — database SQLite tự tạo trên máy kèm 3 báo thức demo (seed sẽ gỡ khi form tạo báo thức hoàn thiện).
+   > Không cần cấu hình gì thêm — database SQLite tự tạo trên máy. Máy Android 12+ sẽ hỏi quyền "Báo thức và lời nhắc" ở lần lưu báo thức đầu tiên.
 
 ## Kiểm tra chất lượng
 
@@ -79,6 +79,6 @@ flutter test              # unit + widget test
 ## Việc cần làm tiếp (kick-off → MVP)
 
 Xem checklist chi tiết trong [`docs/development-roadmap.md`](docs/development-roadmap.md). Tóm tắt bước kế tiếp:
-- Hoàn thiện form `AlarmEditPage` + nối `AlarmScheduler`.
+- Viết body `alarmCallback` (foreground service + overlay + phát nhạc khi reo).
 - Viết native MethodChannel `wakelock/volume` trong `MainActivity.kt`.
 - Cấu hình `FlutterForegroundTask.init(...)` trong `bootstrap()`.

@@ -1,3 +1,5 @@
+import '../../../../core/platform/alarm_scheduler.dart';
+import '../../../../core/utils/date_time_utils.dart';
 import '../../domain/entities/alarm.dart';
 import '../../domain/repositories/alarm_repository.dart';
 import '../datasources/alarm_local_datasource.dart';
@@ -6,10 +8,16 @@ import '../models/alarm_model.dart';
 /// SQLite-backed repository — the on-device database is the single source of
 /// truth. No remote/sync layer: alarms are per-device by nature and must be
 /// readable offline by the background scheduler isolate.
+///
+/// Persistence and OS scheduling are kept in sync here: every write that
+/// changes when/whether an alarm fires also (re)schedules or cancels it.
+/// Only the NEXT occurrence is scheduled; rescheduling repeating alarms after
+/// they fire happens in `alarmCallback` (see core/platform/alarm_scheduler.dart).
 class LocalAlarmRepository implements AlarmRepository {
-  LocalAlarmRepository(this._local);
+  LocalAlarmRepository(this._local, this._scheduler);
 
   final AlarmLocalDataSource _local;
+  final AlarmScheduler _scheduler;
 
   @override
   Future<List<Alarm>> getAlarms() => _local.fetchAll();
@@ -20,16 +28,36 @@ class LocalAlarmRepository implements AlarmRepository {
   @override
   Future<void> upsertAlarm(Alarm alarm) async {
     await _local.upsert(AlarmModel.fromEntity(alarm));
-    // TODO: (re)schedule the alarm via AlarmScheduler after persisting.
+    await _syncSchedule(alarm);
   }
 
   @override
   Future<void> deleteAlarm(String id) async {
     await _local.delete(id);
-    // TODO: cancel the scheduled alarm via AlarmScheduler.
+    await _scheduler.cancel(AlarmScheduler.stableId(id));
   }
 
   @override
-  Future<void> setEnabled(String id, {required bool enabled}) =>
-      _local.setEnabled(id, enabled: enabled);
+  Future<void> setEnabled(String id, {required bool enabled}) async {
+    await _local.setEnabled(id, enabled: enabled);
+    final alarm = await _local.fetchById(id);
+    if (alarm != null) await _syncSchedule(alarm);
+  }
+
+  /// Schedule the next occurrence when enabled, otherwise cancel.
+  Future<void> _syncSchedule(Alarm alarm) async {
+    final intId = AlarmScheduler.stableId(alarm.id);
+    if (alarm.isEnabled) {
+      await _scheduler.scheduleOneShot(
+        intId,
+        DateTimeUtils.nextOccurrence(
+          alarm.hour,
+          alarm.minute,
+          alarm.repeatDays,
+        ),
+      );
+    } else {
+      await _scheduler.cancel(intId);
+    }
+  }
 }

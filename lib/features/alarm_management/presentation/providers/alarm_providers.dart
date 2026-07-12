@@ -12,7 +12,10 @@ final alarmLocalDataSourceProvider = Provider<AlarmLocalDataSource>((ref) {
 });
 
 final alarmRepositoryProvider = Provider<AlarmRepository>((ref) {
-  return LocalAlarmRepository(ref.watch(alarmLocalDataSourceProvider));
+  return LocalAlarmRepository(
+    ref.watch(alarmLocalDataSourceProvider),
+    ref.watch(alarmSchedulerProvider),
+  );
 });
 
 /// Async list of alarms shown on the home screen. Invalidate to refresh.
