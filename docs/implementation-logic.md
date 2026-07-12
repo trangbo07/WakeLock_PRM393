@@ -97,12 +97,29 @@ Luồng end-to-end khi tới giờ:
 
 ## 4. Nhiệm vụ tắt báo thức
 
-*(Phase 3 — sẽ cập nhật khi triển khai)*
+**Code:** `features/task/presentation/tasks/*`, `features/task/domain/*`
 
-**Đã có:** `DismissTaskConfig` (type + difficulty/shakeCount/qrPayload/photoTag),
-lưu JSON trong cột `dismiss_task`. UI chọn ở `DismissTaskSelector`
-(ChoiceChip + field điều kiện theo type). `TaskRunnerPage` dispatch theo type,
-mỗi task page pop `TaskResult(completed: bool)`.
+`DismissTaskConfig` (type + difficulty/shakeCount/qrPayload/photoTag) lưu JSON
+cột `dismiss_task`. UI chọn ở `DismissTaskSelector`. `TaskRunnerPage` dispatch
+theo type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task page có
+`automaticallyImplyLeading: false` (không cho thoát bằng nút back của AppBar).
+
+- **Toán (`math_task_page`):** giải `difficulty` phép liên tiếp (difficulty vừa
+  là số câu vừa là độ khó). Logic sinh đề tách ra `MathProblemGenerator`
+  (`domain/math_problem_generator.dart`) — nhận `Random` seed để test được;
+  d1-2 cộng/trừ số nhỏ, d3+ thêm nhân + số lớn, trừ luôn ≥ 0. Sai đáp án chỉ
+  hiện lỗi + không tiến, không fail báo thức.
+- **Lắc (`shake_task_page`):** đếm shake qua `sensors_plus`
+  `accelerometerEventStream`. Logic đếm tách ra `ShakeDetector`
+  (`domain/shake_detector.dart`, pure, test bằng sample tổng hợp): 1 shake =
+  magnitude vượt threshold 18 m/s² SAU khi đã lắng xuống dưới 60% threshold
+  (re-arm) — tránh đếm nhiều lần cho 1 cú lắc. Đạt count → auto pop success.
+- **QR (`qr_scan_task_page`):** `mobile_scanner` v7 (`MobileScanner(onDetect:)`,
+  `capture.barcodes[].rawValue`). So khớp `qrPayload`; payload rỗng/null → mã
+  bất kỳ cũng đạt. Sai mã → hiện hint, tiếp tục quét.
+- **Ảnh (`photo_task_page`):** `image_picker` `pickImage(source: camera)`.
+  Chụp được ảnh bất kỳ = đạt; `photoTag` chỉ là gợi ý (nhận diện vật thể
+  on-device để tương lai). Hủy/không có camera → cho chụp lại.
 
 ## 5. Hardcore (volume lock / overlay / foreground service)
 

@@ -28,12 +28,12 @@
 - [x] Nhạc chuông thật (.wav) trong `assets/ringtones/`
 - Ghi chú: foreground service chống-kill để Phase 4 (notification full-screen intent đã đủ để reo ở Phase 2)
 
-## Phase 3 — Nhiệm vụ tắt báo thức
+## Phase 3 — Nhiệm vụ tắt báo thức ✅ (hoàn thành 2026-07-12)
 
-- [ ] Toán: sinh đề theo độ khó, kiểm tra đáp án, đếm số câu đúng
-- [ ] Lắc máy: đọc accelerometer (sensors_plus), đếm N lần lắc
-- [ ] Quét QR: MobileScanner, so khớp payload
-- [ ] Chụp ảnh: image_picker/camera, (tùy chọn) nhận diện vật thể
+- [x] Toán: `MathProblemGenerator` sinh đề theo độ khó, giải liên tiếp N câu
+- [x] Lắc máy: `ShakeDetector` + accelerometer (sensors_plus), đếm N lần lắc có progress
+- [x] Quét QR: MobileScanner v7, so khớp payload
+- [x] Chụp ảnh: image_picker/camera (nhận diện vật thể để tương lai)
 
 ## Phase 4 — Tính năng hardcore
 
