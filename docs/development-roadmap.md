@@ -35,12 +35,12 @@
 - [x] Quét QR: MobileScanner v7, so khớp payload
 - [x] Chụp ảnh: image_picker/camera (nhận diện vật thể để tương lai)
 
-## Phase 4 — Tính năng hardcore
+## Phase 4 — Tính năng hardcore ✅ (hoàn thành 2026-07-12)
 
-- [ ] Native MethodChannel `wakelock/volume` trong MainActivity.kt (ghim volume + nuốt phím)
-- [ ] Overlay đè lock screen hoàn chỉnh (cấp quyền + UI đếm/nhiệm vụ trong overlay)
-- [ ] Foreground service cấu hình đầy đủ + xin bỏ tối ưu pin
-- [ ] Tăng dần âm lượng + chặn giảm khi đang reo
+- [x] Native MethodChannel `wakelock/volume` trong MainActivity.kt (ghim volume + nuốt phím VOLUME_UP/DOWN)
+- [x] Đè lock screen bằng full-screen intent + showWhenLocked (overlay window riêng: bỏ, YAGNI — xem implementation-logic.md §5)
+- [x] Foreground service cấu hình đầy đủ (init bootstrap + start/stop quanh lúc reo) + xin bỏ tối ưu pin trong Settings
+- [x] Tăng dần âm lượng + chặn giảm khi đang reo
 
 ## Phase 5 — Hoàn thiện
 

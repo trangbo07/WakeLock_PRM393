@@ -56,6 +56,13 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
         AppLogger.w('Volume lock unavailable: $e');
       }
     }
+    // Anti-kill: keep this process alive so the alarm can't be silenced by the
+    // OS reclaiming memory mid-ring.
+    try {
+      await ref.read(foregroundServiceProvider).start();
+    } catch (e) {
+      AppLogger.w('Foreground service start failed: $e');
+    }
   }
 
   /// Tear down sound + volume lock + notification. Fire-and-forget so closing
@@ -64,6 +71,7 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
   /// still valid; `_player` teardown also happens in [dispose].
   void _teardown() {
     final volumeLock = widget.alarm.volumeLock ? ref.read(volumeLockProvider) : null;
+    final foregroundService = ref.read(foregroundServiceProvider);
     final notifId = AlarmScheduler.stableId(widget.alarm.id);
     () async {
       try {
@@ -75,6 +83,11 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
         await volumeLock?.unlock();
       } catch (e) {
         AppLogger.w('Volume unlock unavailable: $e');
+      }
+      try {
+        await foregroundService.stop();
+      } catch (e) {
+        AppLogger.w('Foreground service stop failed: $e');
       }
       try {
         await AlarmNotificationService.cancel(notifId);

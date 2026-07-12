@@ -123,10 +123,31 @@ theo type; mỗi task page pop `TaskResult(completed: bool)`. Toàn bộ task pa
 
 ## 5. Hardcore (volume lock / overlay / foreground service)
 
-*(Phase 4 — sẽ cập nhật khi triển khai)*
+**Code:** `android/.../MainActivity.kt`, `core/platform/volume_lock_channel.dart`,
+`core/platform/foreground_service.dart`, `features/settings/*`
 
-**Đã có:** wrapper Dart `VolumeLockChannel` (MethodChannel `wakelock/volume`,
-native chưa viết), `OverlayService`, `ForegroundServiceController`.
+- **Volume lock (native Kotlin):** `MainActivity` đăng ký MethodChannel
+  `wakelock/volume`. `lockToMax` → set STREAM_ALARM về max + bật cờ
+  `volumeLocked`. `unlock` → tắt cờ. `dispatchKeyEvent` nuốt phím VOLUME_UP/DOWN
+  khi cờ bật (return true) và set lại max mỗi lần nhấn → không thể vặn nhỏ khi
+  reo. Dart wrapper `VolumeLockChannel` gọi từ `AlarmRingingPage`.
+- **Tăng dần âm lượng:** `RingtonePlayerService` (mục 3) — timer 5s tăng volume
+  player 0.2→1.0. Kết hợp volume lock: người dùng không hạ được STREAM_ALARM.
+- **Foreground service (chống-kill):** `ForegroundServiceController.init()` gọi
+  1 lần trong `bootstrap()`; `start()` khi vào `AlarmRingingPage`, `stop()` lúc
+  teardown. Chạy ở **isolate chính** (nơi có UI + nhạc), không phải isolate nền
+  — vì đây là process cần giữ sống. serviceTypes: mediaPlayback + specialUse.
+  Manifest phải khai báo `com.pravera.flutter_foreground_task.service.ForegroundService`
+  (đúng tên) + `<property PROPERTY_SPECIAL_USE_FGS_SUBTYPE>` cho Android 14+.
+- **Overlay:** quyết định KHÔNG dùng overlay window song song. "Đè màn hình khóa"
+  đã đạt bằng full-screen intent + `showWhenLocked`/`turnScreenOn` (mục 3) —
+  overlay engine riêng + message channel để đồng bộ task state là thừa (YAGNI).
+  Quyền SYSTEM_ALERT_WINDOW vẫn xin trong Settings để dự phòng. `OverlayService`
+  giữ nguyên nhưng chưa dùng trong luồng chính.
+- **Settings/permissions:** `AppPermission` enum (title + mô tả +
+  `permission_handler` Permission) là nguồn duy nhất danh sách quyền hardcore.
+  `SettingsPage` hiện trạng thái grant trực tiếp + nút cấp quyền, tự re-check khi
+  app resume (quay lại từ màn hình system settings).
 
 ## 6. Form sửa báo thức (AlarmEditPage)
 
