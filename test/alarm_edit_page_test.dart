@@ -28,6 +28,9 @@ class _FakeAlarmRepository implements AlarmRepository {
 
   @override
   Future<void> setEnabled(String id, {required bool enabled}) async {}
+
+  @override
+  Future<void> rescheduleAllEnabled() async {}
 }
 
 void main() {

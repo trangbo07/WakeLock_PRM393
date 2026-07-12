@@ -26,11 +26,18 @@ class AppDatabase {
     final path = p.join(await getDatabasesPath(), AppConstants.databaseFile);
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, _) => createSchema(db),
       onUpgrade: (db, oldV, _) async {
         // v2 added the custom_ringtones table.
         if (oldV < 2) await _createCustomRingtones(db);
+        // v3 added the flashlight (flashbang) column.
+        if (oldV < 3) {
+          await db.execute(
+            'ALTER TABLE ${AppConstants.alarmsTable} '
+            'ADD COLUMN flashlight INTEGER NOT NULL DEFAULT 1',
+          );
+        }
       },
     );
   }
@@ -51,6 +58,7 @@ class AppDatabase {
         vibrate         INTEGER NOT NULL DEFAULT 1,
         volume_lock     INTEGER NOT NULL DEFAULT 1,
         escalate_volume INTEGER NOT NULL DEFAULT 1,
+        flashlight      INTEGER NOT NULL DEFAULT 1,
         dismiss_task    TEXT NOT NULL
       )
     ''');

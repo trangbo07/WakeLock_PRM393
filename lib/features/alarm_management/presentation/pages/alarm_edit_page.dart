@@ -210,6 +210,14 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
             onChanged: (v) =>
                 setState(() => _draft = _draft.copyWith(escalateVolume: v)),
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Đèn flash nhấp nháy'),
+            subtitle: const Text('Chớp đèn flash + màn hình khi reo'),
+            value: _draft.flashlight,
+            onChanged: (v) =>
+                setState(() => _draft = _draft.copyWith(flashlight: v)),
+          ),
           const SizedBox(height: 24),
           AppPrimaryButton(
             label: 'Lưu báo thức',

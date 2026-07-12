@@ -24,6 +24,8 @@ class AlarmSoundService : Service() {
         const val extraEscalate = "escalate"
         const val extraLabel = "label"
         const val extraAlarmId = "alarmId"
+        const val extraVibrate = "vibrate"
+        const val extraFlashlight = "flashlight"
 
         private const val channelId = "wakelock_alarm_ring"
         private const val notificationId = 91234
@@ -37,6 +39,7 @@ class AlarmSoundService : Service() {
     }
 
     private val ringtones by lazy { SystemRingtones(applicationContext) }
+    private val effects by lazy { AlarmEffects(applicationContext) }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -48,17 +51,22 @@ class AlarmSoundService : Service() {
 
         val soundUri = intent?.getStringExtra(extraSoundUri)
         val escalate = intent?.getBooleanExtra(extraEscalate, true) ?: true
+        val vibrate = intent?.getBooleanExtra(extraVibrate, true) ?: true
+        val flashlight = intent?.getBooleanExtra(extraFlashlight, true) ?: true
         val label = intent?.getStringExtra(extraLabel) ?: "Báo thức"
         val alarmId = intent?.getStringExtra(extraAlarmId) ?: ""
 
         currentAlarmId = alarmId
         startForeground(notificationId, buildNotification(label, alarmId))
         ringtones.startAlarm(soundUri, escalate)
+        if (flashlight) effects.startFlash()
+        if (vibrate) effects.startVibration()
         return START_STICKY
     }
 
     private fun stopEverything() {
         currentAlarmId = null
+        effects.stopAll()
         ringtones.stopAlarm()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -71,6 +79,7 @@ class AlarmSoundService : Service() {
 
     override fun onDestroy() {
         currentAlarmId = null
+        effects.stopAll()
         ringtones.stopAlarm()
         super.onDestroy()
     }

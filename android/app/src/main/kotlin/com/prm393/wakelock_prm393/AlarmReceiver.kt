@@ -17,6 +17,8 @@ class AlarmReceiver : BroadcastReceiver() {
             action = AlarmSoundService.actionRing
             putExtra(AlarmSoundService.extraSoundUri, intent.getStringExtra(AlarmSoundService.extraSoundUri))
             putExtra(AlarmSoundService.extraEscalate, intent.getBooleanExtra(AlarmSoundService.extraEscalate, true))
+            putExtra(AlarmSoundService.extraVibrate, intent.getBooleanExtra(AlarmSoundService.extraVibrate, true))
+            putExtra(AlarmSoundService.extraFlashlight, intent.getBooleanExtra(AlarmSoundService.extraFlashlight, true))
             putExtra(AlarmSoundService.extraLabel, intent.getStringExtra(AlarmSoundService.extraLabel))
             putExtra(AlarmSoundService.extraAlarmId, intent.getStringExtra(AlarmSoundService.extraAlarmId))
         }

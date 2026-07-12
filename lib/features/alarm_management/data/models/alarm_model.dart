@@ -19,6 +19,7 @@ class AlarmModel extends Alarm {
     super.vibrate,
     super.volumeLock,
     super.escalateVolume,
+    super.flashlight,
     super.dismissTask,
   });
 
@@ -33,6 +34,7 @@ class AlarmModel extends Alarm {
         vibrate: a.vibrate,
         volumeLock: a.volumeLock,
         escalateVolume: a.escalateVolume,
+        flashlight: a.flashlight,
         dismissTask: a.dismissTask,
       );
 
@@ -50,6 +52,7 @@ class AlarmModel extends Alarm {
         vibrate: ((row['vibrate'] as num?) ?? 1) != 0,
         volumeLock: ((row['volume_lock'] as num?) ?? 1) != 0,
         escalateVolume: ((row['escalate_volume'] as num?) ?? 1) != 0,
+        flashlight: ((row['flashlight'] as num?) ?? 1) != 0,
         dismissTask: _taskFromJson(row['dismiss_task'] as String?),
       );
 
@@ -64,6 +67,7 @@ class AlarmModel extends Alarm {
         'vibrate': vibrate ? 1 : 0,
         'volume_lock': volumeLock ? 1 : 0,
         'escalate_volume': escalateVolume ? 1 : 0,
+        'flashlight': flashlight ? 1 : 0,
         'dismiss_task': jsonEncode(_taskToJson(dismissTask)),
       };
 

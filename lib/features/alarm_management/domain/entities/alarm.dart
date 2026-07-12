@@ -16,6 +16,7 @@ class Alarm extends Equatable {
     this.vibrate = true,
     this.volumeLock = true,
     this.escalateVolume = true,
+    this.flashlight = true,
     this.dismissTask = const DismissTaskConfig(),
   });
 
@@ -41,6 +42,9 @@ class Alarm extends Equatable {
   /// Gradually increase volume from low to max.
   final bool escalateVolume;
 
+  /// Strobe the camera flashlight while ringing ("flashbang").
+  final bool flashlight;
+
   /// Task the user must complete to turn the alarm off.
   final DismissTaskConfig dismissTask;
 
@@ -57,6 +61,7 @@ class Alarm extends Equatable {
     bool? vibrate,
     bool? volumeLock,
     bool? escalateVolume,
+    bool? flashlight,
     DismissTaskConfig? dismissTask,
   }) {
     return Alarm(
@@ -70,6 +75,7 @@ class Alarm extends Equatable {
       vibrate: vibrate ?? this.vibrate,
       volumeLock: volumeLock ?? this.volumeLock,
       escalateVolume: escalateVolume ?? this.escalateVolume,
+      flashlight: flashlight ?? this.flashlight,
       dismissTask: dismissTask ?? this.dismissTask,
     );
   }
@@ -86,6 +92,7 @@ class Alarm extends Equatable {
         vibrate,
         volumeLock,
         escalateVolume,
+        flashlight,
         dismissTask,
       ];
 }

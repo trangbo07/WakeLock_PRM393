@@ -2,6 +2,22 @@
 
 Ghi các thay đổi quan trọng. Mới nhất ở trên. (Định dạng ngày: YYYY-MM-DD.)
 
+## 2026-07-12 (bổ sung tối)
+
+### Hiệu ứng hardcore + chống gian lận đồng hồ + icon
+- **Đèn flash "flashbang"**: khi reo, `AlarmSoundService` chớp đèn flash camera
+  (native `AlarmEffects`, ~3 nháy/giây) + màn hình reo chớp amber↔đen. Toggle
+  per-báo-thức `flashlight` (cột DB mới, **schema v3**, migration `ALTER TABLE`).
+- **Rung dồn dập tăng dần**: rung theo `alarm.vibrate`, on-time tăng/gap giảm
+  dần theo thời gian (VibratorManager/Vibrator).
+- **Chống chỉnh đồng hồ né báo thức**: `rescheduleAllEnabled()` chạy khi mở app
+  + mỗi lần resume → re-anchor mọi báo thức bật về đúng "lần kế tiếp" theo giờ
+  thực. Đổi đồng hồ thì lần mở app kế các báo thức tự khớp lại.
+- **Icon + tên app**: icon đồng hồ báo thức hổ phách trên navy (adaptive), nhãn
+  "WakeLock".
+- **Xin quyền lần đầu**: `runFirstLaunchPermissionOnboarding()` hỏi tất cả quyền
+  hardcore 1 lần khi mở app đầu tiên; đổi lại được trong Cài đặt.
+
 ## 2026-07-12
 
 ### Kiến trúc lưu trữ

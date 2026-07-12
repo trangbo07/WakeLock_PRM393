@@ -34,6 +34,8 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
     // First launch: ask for all hardcore permissions once (notification, exact
     // alarm, overlay, battery, camera). Changeable later in Settings.
     runFirstLaunchPermissionOnboarding();
+    // Anti clock-tamper: re-anchor alarms to the real clock on startup.
+    _reanchorAlarms();
     // Native pushes the alarm id here when a ring notification is tapped / its
     // full-screen intent fires while the app is already running.
     const MethodChannel('wakelock/ringtones').setMethodCallHandler((call) async {
@@ -58,6 +60,16 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
       // An alarm that fired (and a one-shot that self-disabled) while we were
       // backgrounded means the list may be stale — refresh it.
       ref.invalidate(alarmListProvider);
+      // Re-anchor alarms in case the system clock was changed to dodge one.
+      _reanchorAlarms();
+    }
+  }
+
+  Future<void> _reanchorAlarms() async {
+    try {
+      await ref.read(alarmRepositoryProvider).rescheduleAllEnabled();
+    } catch (e) {
+      AppLogger.w('Reschedule-all failed: $e');
     }
   }
 

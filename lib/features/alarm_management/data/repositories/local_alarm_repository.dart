@@ -45,6 +45,16 @@ class LocalAlarmRepository implements AlarmRepository {
     if (alarm != null) await _syncSchedule(alarm);
   }
 
+  @override
+  Future<void> rescheduleAllEnabled() async {
+    // Re-anchor every enabled alarm to its next occurrence for the CURRENT
+    // wall clock. Defeats the "change the system time to skip the alarm" cheat:
+    // whenever the app opens, alarms snap back to the correct next HH:mm.
+    for (final alarm in await _local.fetchAll()) {
+      if (alarm.isEnabled) await _syncSchedule(alarm);
+    }
+  }
+
   /// Schedule the next occurrence when enabled, otherwise cancel.
   Future<void> _syncSchedule(Alarm alarm) async {
     final intId = AlarmScheduler.stableId(alarm.id);

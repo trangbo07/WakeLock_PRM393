@@ -55,6 +55,8 @@ Future<void> _startRingService(AlarmModel alarm) async {
     arguments: <String, dynamic>{
       'soundUri': alarm.ringtoneId,
       'escalate': alarm.escalateVolume,
+      'vibrate': alarm.vibrate,
+      'flashlight': alarm.flashlight,
       'label': alarm.label.isEmpty ? 'Báo thức' : alarm.label,
       'alarmId': alarm.id,
     },

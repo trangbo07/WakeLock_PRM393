@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,10 +32,25 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
   // widget-tree finalization (Riverpod forbids that).
   late final _ringtoneChannel = ref.read(systemRingtoneChannelProvider);
 
+  // Screen strobe (flashbang) — syncs roughly with the native torch strobe.
+  Timer? _strobeTimer;
+  bool _strobeBright = false;
+
   @override
   void initState() {
     super.initState();
     _lockDown();
+    if (widget.alarm.flashlight) {
+      _strobeTimer = Timer.periodic(const Duration(milliseconds: 350), (_) {
+        if (mounted) setState(() => _strobeBright = !_strobeBright);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _strobeTimer?.cancel();
+    super.dispose();
   }
 
   /// Pin the volume + keep the screen on / over the keyguard. The sound itself
@@ -83,37 +100,48 @@ class _AlarmRingingPageState extends ConsumerState<AlarmRingingPage> {
   @override
   Widget build(BuildContext context) {
     final alarm = widget.alarm;
+    // Flashbang: alternate the whole screen between black and glaring amber.
+    final bright = _strobeBright;
+    final bg = bright ? const Color(0xFFF59E0B) : Colors.black;
+    final timeColor =
+        bright ? Colors.black : Theme.of(context).colorScheme.primary;
+    final labelColor = bright ? Colors.black87 : Colors.white70;
+
     return PopScope(
       canPop: false,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  DateTimeUtils.formatHm(alarm.hour, alarm.minute),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary, // amber
-                    fontSize: 72,
-                    fontWeight: FontWeight.w700,
-                    // Tabular figures keep the digits from jittering.
-                    fontFeatures: const [FontFeature.tabularFigures()],
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        color: bg,
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateTimeUtils.formatHm(alarm.hour, alarm.minute),
+                    style: TextStyle(
+                      color: timeColor,
+                      fontSize: 72,
+                      fontWeight: FontWeight.w700,
+                      // Tabular figures keep the digits from jittering.
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  alarm.label.isEmpty ? 'Báo thức' : alarm.label,
-                  style: const TextStyle(color: Colors.white70, fontSize: 22),
-                ),
-                const SizedBox(height: 48),
-                FilledButton.icon(
-                  onPressed: _attemptDismiss,
-                  icon: const Icon(Icons.alarm_off),
-                  label: const Text('Tắt báo thức'),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    alarm.label.isEmpty ? 'Báo thức' : alarm.label,
+                    style: TextStyle(color: labelColor, fontSize: 22),
+                  ),
+                  const SizedBox(height: 48),
+                  FilledButton.icon(
+                    onPressed: _attemptDismiss,
+                    icon: const Icon(Icons.alarm_off),
+                    label: const Text('Tắt báo thức'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

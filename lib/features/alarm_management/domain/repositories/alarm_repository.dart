@@ -8,4 +8,8 @@ abstract interface class AlarmRepository {
   Future<void> upsertAlarm(Alarm alarm);
   Future<void> deleteAlarm(String id);
   Future<void> setEnabled(String id, {required bool enabled});
+
+  /// Re-anchor all enabled alarms to their next occurrence for the current
+  /// clock (anti clock-tamper). Call on app start / resume.
+  Future<void> rescheduleAllEnabled();
 }
