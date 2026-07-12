@@ -55,8 +55,11 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
   }
 
   Future<void> _pickRingtone() async {
-    final picked =
-        await Navigator.pushNamed(context, AppRouter.ringtonePicker);
+    final picked = await Navigator.pushNamed(
+      context,
+      AppRouter.ringtonePicker,
+      arguments: _draft.ringtoneId,
+    );
     if (picked is String) {
       setState(() => _draft = _draft.copyWith(ringtoneId: picked));
     }

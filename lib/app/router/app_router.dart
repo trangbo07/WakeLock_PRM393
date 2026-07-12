@@ -32,7 +32,10 @@ class AppRouter {
       case alarmRinging:
         return _page(AlarmRingingPage(alarm: settings.arguments as Alarm));
       case ringtonePicker:
-        return _page(const RingtonePickerPage());
+        // Optional String argument = the currently-selected ringtone id.
+        return _page(
+          RingtonePickerPage(selectedId: settings.arguments as String?),
+        );
       case AppRouter.settings:
         return _page(const SettingsPage());
       default:

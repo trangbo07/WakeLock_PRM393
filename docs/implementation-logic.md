@@ -89,11 +89,22 @@ Luồng end-to-end khi tới giờ:
 **Code:** `features/ringtone/data/repositories/ringtone_repository_impl.dart`,
 `assets/ringtones/*.wav`
 
-3 file .wav tự sinh (22050Hz mono): `default` (beep 1kHz), `siren` (sweep
-600↔1400Hz), `nuclear` (two-tone 880/620Hz). Loop liền mạch bằng
-`ReleaseMode.loop`. `RingtonePlayerService` strip prefix `assets/` vì
-`AssetSource` tính path từ gốc `assets/`. Script sinh lại:
-`scratchpad/generate_alarm_ringtones.py` (không commit — chỉ .wav được commit).
+14 file .wav tự sinh (22050Hz mono), loop liền mạch bằng `ReleaseMode.loop`.
+Tất cả là giai điệu tổng hợp gốc (KHÔNG dùng nhạc bản quyền):
+- Hiện đại/melodic: `marimba`, `melody`, `edm_pluck`, `lofi`, `arcade`,
+  `bass_drop` — dùng envelope ADSR + harmonic decay (pluck/marimba/EDM).
+- Cổ điển: `default` (beep 1kHz), `beep_slow`, `digital`, `chime`.
+- Hardcore tần số cao (khó ngủ tiếp, `highFrequency: true`): `siren`,
+  `nuclear`, `buzzer`, `pulse`.
+`RingtonePlayerService` strip prefix `assets/` vì `AssetSource` tính path từ
+gốc `assets/`. Script sinh lại (không commit — chỉ .wav commit):
+`scratchpad/generate_alarm_ringtones.py` (tone cơ bản),
+`scratchpad/generate_modern_ringtones.py` (tone hiện đại).
+
+**Nghe thử (preview):** `RingtonePickerPage` (ConsumerStatefulWidget) giữ 1
+`AudioPlayer` riêng cho preview; nút play/stop mỗi dòng toggle `_playingId`;
+`onPlayerComplete` tự reset icon; chọn dòng → stop preview → pop id. Nhận
+`selectedId` qua route argument để hiện dấu ✓.
 
 ## 4. Nhiệm vụ tắt báo thức
 
