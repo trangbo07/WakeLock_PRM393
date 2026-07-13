@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "99613734125",
+    "project_id": "wakelock-89bc7",
+    "storage_bucket": "wakelock-89bc7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:99613734125:android:6d064d0be8a04ef67fc8e4",
+        "android_client_info": {
+          "package_name": "com.prm393.wakelock_prm393"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "99613734125-sq9iomav08p1aeeqtsiesnkmbvd3g1do.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.prm393.wakelock_prm393",
+            "certificate_hash": "c06b57b55a074976e8a9050901d0fae7f3c20d62"
+          }
+        },
+        {
+          "client_id": "99613734125-1psdal7ofafhgofjqmf8doutft091la6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXvQmB03Ddqk96mvSt-up5L_-AeEfWaGE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "99613734125-1psdal7ofafhgofjqmf8doutft091la6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

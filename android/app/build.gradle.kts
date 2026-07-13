@@ -4,6 +4,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase: apply the Google Services plugin only when google-services.json is
+// present, so the project still builds before Firebase config is added (the
+// offline alarm core does not depend on Firebase). Drop the file into
+// android/app/ to enable Firebase. See docs/firebase-setup.md.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.prm393.wakelock_prm393"
     // Pinned to 36: newer plugins (file_picker/path_provider deps) require a
@@ -21,9 +29,9 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.prm393.wakelock_prm393"
-        // Lock-screen overlay + notifications need API 23+; Flutter's default
-        // minSdk already satisfies this, so we track it rather than pinning.
-        minSdk = flutter.minSdkVersion
+        // Lock-screen overlay + notifications + Firebase all need API 23+.
+        // Track Flutter's default but never drop below 23.
+        minSdk = maxOf(23, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

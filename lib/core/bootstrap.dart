@@ -1,4 +1,5 @@
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -26,6 +27,16 @@ Future<void> bootstrap() async {
     AppLogger.w('.env not found — Gemini object recognition disabled');
   }
   AppLogger.i('Gemini object recognition: ${Env.hasGemini ? 'enabled' : 'disabled'}');
+
+  // Firebase powers the OPTIONAL social layer (auth, feed, friends, challenges).
+  // Guarded: with no google-services.json the offline alarm core still runs, so
+  // the app is usable before Firebase is configured and for guest (no-login) use.
+  try {
+    await Firebase.initializeApp();
+    AppLogger.i('Firebase initialized');
+  } catch (e) {
+    AppLogger.w('Firebase not configured — social features disabled ($e)');
+  }
 
   try {
     await AppDatabase.instance.database;
