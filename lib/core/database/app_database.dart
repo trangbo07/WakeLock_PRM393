@@ -26,7 +26,7 @@ class AppDatabase {
     final path = p.join(await getDatabasesPath(), AppConstants.databaseFile);
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, _) => createSchema(db),
       onUpgrade: (db, oldV, _) async {
         // v2 added the custom_ringtones table.
@@ -38,6 +38,8 @@ class AppDatabase {
             'ADD COLUMN flashlight INTEGER NOT NULL DEFAULT 1',
           );
         }
+        // v4 added the wake-flow tables (routine / photo / streak backbone).
+        if (oldV < 4) await _createWakeFlowTables(db);
       },
     );
   }
@@ -63,6 +65,7 @@ class AppDatabase {
       )
     ''');
     await _createCustomRingtones(db);
+    await _createWakeFlowTables(db);
   }
 
   /// User-added ringtones: `uri` is the absolute path of the copied audio file.
@@ -71,6 +74,82 @@ class AppDatabase {
       CREATE TABLE ${AppConstants.customRingtonesTable} (
         uri  TEXT PRIMARY KEY,
         name TEXT NOT NULL
+      )
+    ''');
+  }
+
+  /// Tables backing the wake-flow (Ring → Mission → Routine → Photo → Streak).
+  /// Timestamps are epoch milliseconds (INTEGER); booleans are INTEGER 0/1;
+  /// per-item config is JSON TEXT. No cross-table FKs are enforced (an alarm or
+  /// routine may be deleted while its history rows remain, by design).
+  static Future<void> _createWakeFlowTables(Database db) async {
+    // One row per alarm firing — the source of truth for streak/stats.
+    // wake_success = mission_completed && routine_completed && photo_posted
+    // within the allowed window (computed by the streak feature, stored here).
+    await db.execute('''
+      CREATE TABLE ${AppConstants.wakeEventsTable} (
+        id                TEXT PRIMARY KEY,
+        alarm_id          TEXT,
+        fired_at          INTEGER NOT NULL,
+        dismissed_at      INTEGER,
+        mission_completed INTEGER NOT NULL DEFAULT 0,
+        routine_completed INTEGER NOT NULL DEFAULT 0,
+        photo_posted      INTEGER NOT NULL DEFAULT 0,
+        wake_success      INTEGER NOT NULL DEFAULT 0,
+        snooze_count      INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    // A named, reorderable list of steps run after the alarm is dismissed.
+    await db.execute('''
+      CREATE TABLE ${AppConstants.morningRoutinesTable} (
+        id         TEXT PRIMARY KEY,
+        name       TEXT NOT NULL DEFAULT '',
+        is_enabled INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    // type: water/teeth/stretch/meditate/journal/tasks/pomodoro.
+    // `position` = display order (avoid the SQL reserved word `order`).
+    await db.execute('''
+      CREATE TABLE ${AppConstants.routineStepsTable} (
+        id               TEXT PRIMARY KEY,
+        routine_id       TEXT NOT NULL,
+        type             TEXT NOT NULL,
+        position         INTEGER NOT NULL DEFAULT 0,
+        duration_seconds INTEGER NOT NULL DEFAULT 0,
+        config           TEXT NOT NULL DEFAULT '{}'
+      )
+    ''');
+
+    // Execution history of a routine run (for completion statistics).
+    await db.execute('''
+      CREATE TABLE ${AppConstants.routineRunsTable} (
+        id           TEXT PRIMARY KEY,
+        routine_id   TEXT NOT NULL,
+        started_at   INTEGER NOT NULL,
+        completed_at INTEGER,
+        steps_done   INTEGER NOT NULL DEFAULT 0,
+        steps_total  INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    // Locally-captured morning photos. `posted`/`remote_id` track upload to the
+    // cloud feed later; privacy: private/friends/close/selected.
+    await db.execute('''
+      CREATE TABLE ${AppConstants.morningPhotosTable} (
+        id         TEXT PRIMARY KEY,
+        path       TEXT NOT NULL,
+        caption    TEXT NOT NULL DEFAULT '',
+        mood       TEXT,
+        weather    TEXT,
+        wake_time  INTEGER,
+        alarm_time INTEGER,
+        privacy    TEXT NOT NULL DEFAULT 'private',
+        posted     INTEGER NOT NULL DEFAULT 0,
+        remote_id  TEXT,
+        created_at INTEGER NOT NULL
       )
     ''');
   }

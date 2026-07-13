@@ -63,6 +63,31 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        // Amber pill behind the active tab; muted icon/label when inactive.
+        indicatorColor: AppColors.primary.withValues(alpha: 0.18),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            size: 24,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.primary
+                : AppColors.mutedForeground,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 12,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.foreground
+                : AppColors.mutedForeground,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../features/alarm_management/domain/entities/alarm.dart';
 import '../../features/alarm_management/presentation/pages/alarm_edit_page.dart';
-import '../../features/alarm_management/presentation/pages/alarm_list_page.dart';
 import '../../features/alarm_ringing/presentation/pages/alarm_ringing_page.dart';
 import '../../features/ringtone/presentation/pages/ringtone_picker_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../shell/main_shell.dart';
 
 /// Named routes + a simple `onGenerateRoute`. Swap for go_router later if the
 /// navigation graph grows (deep links from notifications, etc.).
@@ -25,7 +25,7 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case home:
-        return _page(const AlarmListPage());
+        return _page(const MainShell());
       case alarmEdit:
         // Pass an Alarm as `arguments` to edit it; null creates a new one.
         return _page(AlarmEditPage(existing: settings.arguments as Alarm?));
@@ -39,7 +39,7 @@ class AppRouter {
       case AppRouter.settings:
         return _page(const SettingsPage());
       default:
-        return _page(const AlarmListPage());
+        return _page(const MainShell());
     }
   }
 
