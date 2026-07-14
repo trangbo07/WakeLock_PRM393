@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/design_tokens.dart';
 import 'about_page.dart';
+import 'demo_data_page.dart';
 import 'permissions_page.dart';
 
 /// Grouped settings menu. Built rows (permissions, notifications, about) work;
@@ -75,6 +77,17 @@ class SettingsPage extends StatelessWidget {
               MaterialPageRoute<void>(builder: (_) => const AboutPage()),
             ),
           ),
+          // Debug-only marketing helper — not shown in release builds.
+          if (kDebugMode)
+            _SettingRow(
+              icon: Icons.science_outlined,
+              color: const Color(0xFF8B5CF6),
+              title: 'Dữ liệu demo',
+              subtitle: 'Tạo 50 người dùng mẫu (chỉ bản debug)',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const DemoDataPage()),
+              ),
+            ),
         ],
       ),
     );
