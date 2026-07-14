@@ -56,6 +56,15 @@ dependencies:
   flutter_dotenv: ^6.0.1
   # Lets the background alarm isolate broadcast to the native ring service.
   android_intent_plus: ^5.2.0
+  # Habit reminders — plain scheduled notifications (not the full-screen alarm).
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+  # Dashboard charts.
+  fl_chart: ^0.69.2
+  # Emergency SOS: pick a contact from the device book, then open the
+  # system SMS/dialer app pre-filled (no sensitive SEND_SMS/CALL_PHONE perms).
+  flutter_contacts: ^1.1.9+2
+  url_launcher: ^6.3.1
   # Pinned to the mature, internally-consistent 3.x/5.x FlutterFire line
   # (the 4.x/6.x train had a firebase_core/firebase_auth ABI mismatch).
   firebase_core: ^3.6.0
