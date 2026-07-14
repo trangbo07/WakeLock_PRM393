@@ -17,6 +17,13 @@ class AppConstants {
   static const String routineRunsTable = 'routine_runs';
   static const String morningPhotosTable = 'morning_photos';
 
+  /// Habit tracker tables (Thói quen tab).
+  static const String habitsTable = 'habits';
+  static const String habitCheckinsTable = 'habit_checkins';
+
+  /// Emergency SOS contacts (global, not per-alarm).
+  static const String emergencyContactsTable = 'emergency_contacts';
+
   /// Default hardcore behavior toggles.
   static const int defaultShakeCount = 50;
   static const int defaultMathProblems = 3;

@@ -21,6 +21,12 @@ class AlarmScheduler {
     return hash & 0x7FFFFFFF;
   }
 
+  /// Distinct id for a "snooze" re-fire of the same alarm — kept in its own
+  /// namespace (offset by 1) so it never collides with [stableId], without
+  /// needing a reverse-hash lookup: `alarm_fire_handler.dart` just tries both
+  /// mappings when a scheduled id fires.
+  static int snoozeStableId(String alarmId) => (stableId(alarmId) + 1) & 0x7FFFFFFF;
+
   /// Schedule a one-shot exact alarm at [when] identified by integer [id]
   /// (from [stableId]). [callback] must be a top-level function annotated with
   /// `@pragma('vm:entry-point')`.

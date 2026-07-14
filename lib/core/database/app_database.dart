@@ -26,7 +26,7 @@ class AppDatabase {
     final path = p.join(await getDatabasesPath(), AppConstants.databaseFile);
     return openDatabase(
       path,
-      version: 4,
+      version: 7,
       onCreate: (db, _) => createSchema(db),
       onUpgrade: (db, oldV, _) async {
         // v2 added the custom_ringtones table.
@@ -40,6 +40,12 @@ class AppDatabase {
         }
         // v4 added the wake-flow tables (routine / photo / streak backbone).
         if (oldV < 4) await _createWakeFlowTables(db);
+        // v5 added snooze config + the morning-routine link on alarms.
+        if (oldV < 5) await _addSnoozeAndRoutineLinkColumns(db);
+        // v6 added the habit tracker tables.
+        if (oldV < 6) await _createHabitTables(db);
+        // v7 added the emergency SOS contacts table.
+        if (oldV < 7) await _createEmergencyContacts(db);
       },
     );
   }
@@ -61,11 +67,16 @@ class AppDatabase {
         volume_lock     INTEGER NOT NULL DEFAULT 1,
         escalate_volume INTEGER NOT NULL DEFAULT 1,
         flashlight      INTEGER NOT NULL DEFAULT 1,
-        dismiss_task    TEXT NOT NULL
+        dismiss_task    TEXT NOT NULL,
+        snooze_minutes    INTEGER NOT NULL DEFAULT 5,
+        max_snooze_count  INTEGER NOT NULL DEFAULT 3,
+        routine_id        TEXT
       )
     ''');
     await _createCustomRingtones(db);
     await _createWakeFlowTables(db);
+    await _createHabitTables(db);
+    await _createEmergencyContacts(db);
   }
 
   /// User-added ringtones: `uri` is the absolute path of the copied audio file.
@@ -84,8 +95,9 @@ class AppDatabase {
   /// routine may be deleted while its history rows remain, by design).
   static Future<void> _createWakeFlowTables(Database db) async {
     // One row per alarm firing — the source of truth for streak/stats.
-    // wake_success = mission_completed && routine_completed && photo_posted
-    // within the allowed window (computed by the streak feature, stored here).
+    // wake_success = mission_completed within WakeEvent.onTimeWindow (10 min)
+    // of fired_at (see features/streak). routine_completed/photo_posted are
+    // bonus signals for the dashboard only — they don't gate wake_success.
     await db.execute('''
       CREATE TABLE ${AppConstants.wakeEventsTable} (
         id                TEXT PRIMARY KEY,
@@ -149,6 +161,70 @@ class AppDatabase {
         privacy    TEXT NOT NULL DEFAULT 'private',
         posted     INTEGER NOT NULL DEFAULT 0,
         remote_id  TEXT,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  /// v5: per-alarm snooze config + optional link to a morning routine run
+  /// after a successful dismiss.
+  static Future<void> _addSnoozeAndRoutineLinkColumns(Database db) async {
+    await db.execute(
+      'ALTER TABLE ${AppConstants.alarmsTable} '
+      'ADD COLUMN snooze_minutes INTEGER NOT NULL DEFAULT 5',
+    );
+    await db.execute(
+      'ALTER TABLE ${AppConstants.alarmsTable} '
+      'ADD COLUMN max_snooze_count INTEGER NOT NULL DEFAULT 3',
+    );
+    await db.execute(
+      'ALTER TABLE ${AppConstants.alarmsTable} ADD COLUMN routine_id TEXT',
+    );
+  }
+
+  /// v6: habit tracker (Thói quen tab). frequency_type: daily/weekdays/weeklyCount.
+  /// frequency_days: JSON int list (1=Mon..7=Sun), used when weekdays.
+  /// habit_checkins.date is a local 'YYYY-MM-DD' key — the unique index blocks
+  /// double check-ins for the same habit on the same day.
+  static Future<void> _createHabitTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE ${AppConstants.habitsTable} (
+        id                  TEXT PRIMARY KEY,
+        name                TEXT NOT NULL DEFAULT '',
+        icon                TEXT NOT NULL DEFAULT 'check',
+        color               INTEGER,
+        frequency_type      TEXT NOT NULL DEFAULT 'daily',
+        frequency_days      TEXT NOT NULL DEFAULT '[]',
+        weekly_target_count INTEGER,
+        reminder_hour       INTEGER,
+        reminder_minute     INTEGER,
+        is_active           INTEGER NOT NULL DEFAULT 1,
+        created_at          INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE ${AppConstants.habitCheckinsTable} (
+        id         TEXT PRIMARY KEY,
+        habit_id   TEXT NOT NULL,
+        date       TEXT NOT NULL,
+        checked_at INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE UNIQUE INDEX idx_habit_checkins_unique
+      ON ${AppConstants.habitCheckinsTable}(habit_id, date)
+    ''');
+  }
+
+  /// v7: global emergency SOS contacts (name/phone snapshot from the device
+  /// contact book — not re-synced, so no standing READ_CONTACTS need beyond
+  /// the add-flow).
+  static Future<void> _createEmergencyContacts(Database db) async {
+    await db.execute('''
+      CREATE TABLE ${AppConstants.emergencyContactsTable} (
+        id         TEXT PRIMARY KEY,
+        name       TEXT NOT NULL,
+        phone      TEXT NOT NULL,
         created_at INTEGER NOT NULL
       )
     ''');
