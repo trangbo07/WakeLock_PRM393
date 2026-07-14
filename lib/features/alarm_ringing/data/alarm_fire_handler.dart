@@ -23,24 +23,40 @@ Future<void> alarmFireHandler(int firedIntId) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     final datasource = AlarmLocalDataSource(AppDatabase.instance);
-    final alarm = findByFiredId(await datasource.fetchAll(), firedIntId);
-    if (alarm == null || !alarm.isEnabled) {
-      AppLogger.w('alarmFireHandler: no enabled alarm for id $firedIntId');
+    final alarms = await datasource.fetchAll();
+
+    final alarm = findByFiredId(alarms, firedIntId);
+    if (alarm != null) {
+      if (!alarm.isEnabled) {
+        AppLogger.w('alarmFireHandler: no enabled alarm for id $firedIntId');
+        return;
+      }
+      if (alarm.isOneShot) {
+        // Standard alarm-clock behavior: a one-shot switches itself off.
+        await datasource.setEnabled(alarm.id, enabled: false);
+      } else {
+        await AlarmScheduler().scheduleOneShot(
+          firedIntId,
+          DateTimeUtils.nextOccurrence(alarm.hour, alarm.minute, alarm.repeatDays),
+          callback: alarmFireHandler,
+        );
+      }
+      await _startRingService(alarm);
       return;
     }
 
-    if (alarm.isOneShot) {
-      // Standard alarm-clock behavior: a one-shot switches itself off.
-      await datasource.setEnabled(alarm.id, enabled: false);
-    } else {
-      await AlarmScheduler().scheduleOneShot(
-        firedIntId,
-        DateTimeUtils.nextOccurrence(alarm.hour, alarm.minute, alarm.repeatDays),
-        callback: alarmFireHandler,
-      );
+    // Not a normal-fire id — check the snooze namespace. A snoozed re-fire
+    // just re-rings: the enable/reschedule bookkeeping above already ran at
+    // the original fire, and a one-shot may already be disabled at this
+    // point (by design, before the user actually dismissed it) so it must
+    // NOT go through the `alarm == null || !alarm.isEnabled` guard again.
+    final snoozed = findBySnoozeId(alarms, firedIntId);
+    if (snoozed != null) {
+      await _startRingService(snoozed);
+      return;
     }
 
-    await _startRingService(alarm);
+    AppLogger.w('alarmFireHandler: no alarm matches fired id $firedIntId');
   } catch (e) {
     AppLogger.e('alarmFireHandler failed: $e');
   }
@@ -68,6 +84,14 @@ Future<void> _startRingService(AlarmModel alarm) async {
 AlarmModel? findByFiredId(List<AlarmModel> alarms, int firedIntId) {
   for (final a in alarms) {
     if (AlarmScheduler.stableId(a.id) == firedIntId) return a;
+  }
+  return null;
+}
+
+/// Same lookup, but in the snooze id namespace (see [AlarmScheduler.snoozeStableId]).
+AlarmModel? findBySnoozeId(List<AlarmModel> alarms, int firedIntId) {
+  for (final a in alarms) {
+    if (AlarmScheduler.snoozeStableId(a.id) == firedIntId) return a;
   }
   return null;
 }

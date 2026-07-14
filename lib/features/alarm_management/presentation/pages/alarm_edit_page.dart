@@ -7,6 +7,8 @@ import '../../../../core/platform/exact_alarm_permission.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../../../shared/widgets/app_primary_button.dart';
 import '../../../ringtone/presentation/providers/ringtone_providers.dart';
+import '../../../routine/domain/entities/routine.dart';
+import '../../../routine/presentation/providers/routine_providers.dart';
 import '../../domain/entities/alarm.dart';
 import '../providers/alarm_providers.dart';
 import '../widgets/dismiss_task_selector.dart';
@@ -52,6 +54,40 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
         () => _draft = _draft.copyWith(hour: picked.hour, minute: picked.minute),
       );
     }
+  }
+
+  // Distinguishes "explicitly chose Không chọn" from "dismissed the sheet
+  // without picking anything" (both would otherwise surface as null).
+  static const _noRoutineSentinel = '__none__';
+
+  Future<void> _pickRoutine() async {
+    final routines = await ref.read(routineListProvider.future);
+    if (!mounted) return;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Không chọn'),
+              onTap: () => Navigator.pop(ctx, _noRoutineSentinel),
+            ),
+            for (final r in routines)
+              ListTile(
+                title: Text(r.name.isEmpty ? 'Routine (${r.steps.length} bước)' : r.name),
+                subtitle: Text('${r.steps.length} bước'),
+                onTap: () => Navigator.pop(ctx, r.id),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || picked == null) return; // dismissed without choosing
+    setState(() => _draft = _draft.copyWith(
+          routineId: picked == _noRoutineSentinel ? null : picked,
+          clearRoutineId: picked == _noRoutineSentinel,
+        ));
   }
 
   Future<void> _pickRingtone() async {
@@ -111,6 +147,17 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
     if (confirmed != true || !mounted) return;
     await ref.read(alarmRepositoryProvider).deleteAlarm(_draft.id);
     if (mounted) Navigator.pop(context, true);
+  }
+
+  /// Display name of the currently selected routine, if any.
+  String _routineName() {
+    final id = _draft.routineId;
+    if (id == null) return 'Không chọn';
+    final routines = ref.watch(routineListProvider).value ?? const <MorningRoutine>[];
+    for (final r in routines) {
+      if (r.id == id) return r.name.isEmpty ? 'Routine (${r.steps.length} bước)' : r.name;
+    }
+    return 'Đã xóa';
   }
 
   /// Display name of the currently selected ringtone. Falls back to a friendly
@@ -186,6 +233,44 @@ class _AlarmEditPageState extends ConsumerState<AlarmEditPage> {
             value: _draft.dismissTask,
             onChanged: (config) =>
                 setState(() => _draft = _draft.copyWith(dismissTask: config)),
+          ),
+          const SizedBox(height: 24),
+          Text('Báo lại (snooze)', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text('Số phút mỗi lần báo lại: ${_draft.snoozeMinutes}',
+              style: theme.textTheme.bodyMedium),
+          Slider(
+            value: _draft.snoozeMinutes.toDouble().clamp(1, 15),
+            min: 1,
+            max: 15,
+            divisions: 14,
+            label: '${_draft.snoozeMinutes} phút',
+            onChanged: (v) =>
+                setState(() => _draft = _draft.copyWith(snoozeMinutes: v.round())),
+          ),
+          Text(
+            _draft.maxSnoozeCount == 0
+                ? 'Số lần báo lại tối đa: Tắt'
+                : 'Số lần báo lại tối đa: ${_draft.maxSnoozeCount}',
+            style: theme.textTheme.bodyMedium,
+          ),
+          Slider(
+            value: _draft.maxSnoozeCount.toDouble().clamp(0, 5),
+            min: 0,
+            max: 5,
+            divisions: 5,
+            label: _draft.maxSnoozeCount == 0 ? 'Tắt' : '${_draft.maxSnoozeCount} lần',
+            onChanged: (v) =>
+                setState(() => _draft = _draft.copyWith(maxSnoozeCount: v.round())),
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.checklist_rtl),
+            title: const Text('Routine sau khi thức dậy'),
+            subtitle: Text(_routineName()),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _pickRoutine,
           ),
           const SizedBox(height: 16),
           SwitchListTile(

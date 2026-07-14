@@ -52,10 +52,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('06:30'), findsOneWidget);
 
-    // Dismiss → TaskRunner (easy task) → tap → back past the ringing screen.
+    // Dismiss → TaskRunner (easy task) → tap → chains into the (skippable)
+    // Morning Photo step → back past the ringing screen.
     await tester.tap(find.text('Tắt báo thức'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Tắt báo thức')); // easy-task confirm button
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bỏ qua')); // skip the morning-photo prompt
     await tester.pumpAndSettle();
 
     expect(find.text('ring'), findsOneWidget);

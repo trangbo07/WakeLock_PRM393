@@ -18,6 +18,9 @@ class Alarm extends Equatable {
     this.escalateVolume = true,
     this.flashlight = true,
     this.dismissTask = const DismissTaskConfig(),
+    this.snoozeMinutes = 5,
+    this.maxSnoozeCount = 3,
+    this.routineId,
   });
 
   final String id;
@@ -48,6 +51,15 @@ class Alarm extends Equatable {
   /// Task the user must complete to turn the alarm off.
   final DismissTaskConfig dismissTask;
 
+  /// Minutes to postpone on "Báo lại" (snooze).
+  final int snoozeMinutes;
+
+  /// Max number of times "Báo lại" can be tapped per firing. 0 disables snooze.
+  final int maxSnoozeCount;
+
+  /// Morning routine to run right after a successful dismiss, if any.
+  final String? routineId;
+
   bool get isOneShot => repeatDays.isEmpty;
 
   Alarm copyWith({
@@ -63,6 +75,10 @@ class Alarm extends Equatable {
     bool? escalateVolume,
     bool? flashlight,
     DismissTaskConfig? dismissTask,
+    int? snoozeMinutes,
+    int? maxSnoozeCount,
+    String? routineId,
+    bool clearRoutineId = false,
   }) {
     return Alarm(
       id: id ?? this.id,
@@ -77,6 +93,9 @@ class Alarm extends Equatable {
       escalateVolume: escalateVolume ?? this.escalateVolume,
       flashlight: flashlight ?? this.flashlight,
       dismissTask: dismissTask ?? this.dismissTask,
+      snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
+      maxSnoozeCount: maxSnoozeCount ?? this.maxSnoozeCount,
+      routineId: clearRoutineId ? null : (routineId ?? this.routineId),
     );
   }
 
@@ -94,5 +113,8 @@ class Alarm extends Equatable {
         escalateVolume,
         flashlight,
         dismissTask,
+        snoozeMinutes,
+        maxSnoozeCount,
+        routineId,
       ];
 }

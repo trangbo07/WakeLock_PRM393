@@ -21,6 +21,9 @@ class AlarmModel extends Alarm {
     super.escalateVolume,
     super.flashlight,
     super.dismissTask,
+    super.snoozeMinutes,
+    super.maxSnoozeCount,
+    super.routineId,
   });
 
   factory AlarmModel.fromEntity(Alarm a) => AlarmModel(
@@ -36,6 +39,9 @@ class AlarmModel extends Alarm {
         escalateVolume: a.escalateVolume,
         flashlight: a.flashlight,
         dismissTask: a.dismissTask,
+        snoozeMinutes: a.snoozeMinutes,
+        maxSnoozeCount: a.maxSnoozeCount,
+        routineId: a.routineId,
       );
 
   factory AlarmModel.fromDbRow(Map<String, dynamic> row) => AlarmModel(
@@ -54,6 +60,9 @@ class AlarmModel extends Alarm {
         escalateVolume: ((row['escalate_volume'] as num?) ?? 1) != 0,
         flashlight: ((row['flashlight'] as num?) ?? 1) != 0,
         dismissTask: _taskFromJson(row['dismiss_task'] as String?),
+        snoozeMinutes: (row['snooze_minutes'] as num?)?.toInt() ?? 5,
+        maxSnoozeCount: (row['max_snooze_count'] as num?)?.toInt() ?? 3,
+        routineId: row['routine_id'] as String?,
       );
 
   Map<String, Object?> toDbRow() => {
@@ -69,6 +78,9 @@ class AlarmModel extends Alarm {
         'escalate_volume': escalateVolume ? 1 : 0,
         'flashlight': flashlight ? 1 : 0,
         'dismiss_task': jsonEncode(_taskToJson(dismissTask)),
+        'snooze_minutes': snoozeMinutes,
+        'max_snooze_count': maxSnoozeCount,
+        'routine_id': routineId,
       };
 
   static DismissTaskConfig _taskFromJson(String? raw) {
@@ -83,6 +95,8 @@ class AlarmModel extends Alarm {
       shakeCount: (json['shake_count'] as num?)?.toInt() ?? 50,
       walkMeters: (json['walk_meters'] as num?)?.toInt() ?? 30,
       photoTag: json['photo_tag'] as String?,
+      memoryPairs: (json['memory_pairs'] as num?)?.toInt() ?? 6,
+      patternLength: (json['pattern_length'] as num?)?.toInt() ?? 4,
     );
   }
 
@@ -92,5 +106,7 @@ class AlarmModel extends Alarm {
         'shake_count': c.shakeCount,
         'walk_meters': c.walkMeters,
         'photo_tag': c.photoTag,
+        'memory_pairs': c.memoryPairs,
+        'pattern_length': c.patternLength,
       };
 }
