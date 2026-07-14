@@ -29,7 +29,8 @@ abstract class FeedRepository {
 
   Future<void> removeReaction(String postId, String uid);
 
-  Future<void> createPost({
+  /// Returns the new post's id.
+  Future<String> createPost({
     required String authorUid,
     required String authorName,
     String authorUsername,

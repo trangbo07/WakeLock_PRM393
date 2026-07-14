@@ -10,6 +10,7 @@ import '../../../friends/presentation/providers/friends_providers.dart';
 import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../domain/entities/post.dart';
 import '../providers/feed_providers.dart';
+import '../providers/morning_photo_sync_provider.dart';
 import '../widgets/post_card.dart';
 import 'compose_post_page.dart';
 import 'post_detail_page.dart';
@@ -24,6 +25,11 @@ class FeedPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final signedIn = ref.watch(sessionProvider).asData?.value != null;
     if (!signedIn) return const _FeedGuest();
+
+    // Upload any locally-captured Morning Photos the user chose to share —
+    // see morning_photo_sync_provider.dart for why this is needed. New posts
+    // then show up on their own via feedProvider's live Firestore stream.
+    ref.watch(morningPhotoFeedSyncProvider);
 
     return DefaultTabController(
       length: 2,

@@ -64,7 +64,7 @@ class FirestoreFeedRepository implements FeedRepository {
       _ds.removeReaction(postId, uid);
 
   @override
-  Future<void> createPost({
+  Future<String> createPost({
     required String authorUid,
     required String authorName,
     String authorUsername = '',

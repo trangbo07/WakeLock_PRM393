@@ -119,10 +119,13 @@ class FeedFirestoreDataSource {
     });
   }
 
-  Future<void> createPost(Map<String, dynamic> data) => _posts.add({
-        ...data,
-        'reactionCount': 0,
-        'commentCount': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+  Future<String> createPost(Map<String, dynamic> data) async {
+    final ref = await _posts.add({
+      ...data,
+      'reactionCount': 0,
+      'commentCount': 0,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return ref.id;
+  }
 }
