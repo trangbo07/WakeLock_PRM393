@@ -8,4 +8,13 @@ abstract class RoutineRepository {
   Future<void> upsertRoutine(MorningRoutine routine);
   Future<void> deleteRoutine(String id);
   Future<void> setEnabled(String id, {required bool enabled});
+
+  /// Log one execution of a routine (for completion stats — `routine_runs`).
+  Future<void> logRun(
+    String routineId, {
+    required int stepsDone,
+    required int stepsTotal,
+    required DateTime startedAt,
+    DateTime? completedAt,
+  });
 }

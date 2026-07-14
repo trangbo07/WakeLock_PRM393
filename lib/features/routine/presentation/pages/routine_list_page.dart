@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/routine.dart';
 import '../providers/routine_providers.dart';
+import 'routine_edit_page.dart';
 
-/// Morning Routine list (STARTER SCAFFOLD for Dev 1).
-///
-/// Data layer is wired end-to-end (routineListProvider → repository → SQLite).
-/// Replace this UI with the real design when the Routine screenshot arrives;
-/// keep reading from routineListProvider and write via routineRepositoryProvider.
+/// Morning Routine list — card per routine (name, step count, enable toggle),
+/// FAB to create a new one. Tap opens `RoutineEditPage`.
 class RoutineListPage extends ConsumerWidget {
   const RoutineListPage({super.key});
 
@@ -15,6 +14,14 @@ class RoutineListPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final routinesAsync = ref.watch(routineListProvider);
     final theme = Theme.of(context);
+
+    Future<void> openEdit(MorningRoutine? existing) async {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => RoutineEditPage(existing: existing)),
+      );
+      ref.invalidate(routineListProvider);
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Morning Routine')),
@@ -34,18 +41,35 @@ class RoutineListPage extends ConsumerWidget {
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(routineListProvider),
                 child: ListView.builder(
+                  padding: const EdgeInsets.all(12),
                   itemCount: routines.length,
                   itemBuilder: (_, i) {
                     final r = routines[i];
-                    return ListTile(
-                      title: Text(r.name.isEmpty ? 'Routine' : r.name),
-                      subtitle: Text('${r.steps.length} bước'),
+                    return Card(
+                      child: ListTile(
+                        title: Text(r.name.isEmpty ? 'Routine' : r.name),
+                        subtitle: Text('${r.steps.length} bước'),
+                        trailing: Switch(
+                          value: r.isEnabled,
+                          onChanged: (v) async {
+                            await ref
+                                .read(routineRepositoryProvider)
+                                .setEnabled(r.id, enabled: v);
+                            ref.invalidate(routineListProvider);
+                          },
+                        ),
+                        onTap: () => openEdit(r),
+                      ),
                     );
                   },
                 ),
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Lỗi: $e')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => openEdit(null),
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/database/app_database.dart';
@@ -55,6 +56,24 @@ class RoutineLocalDataSource {
     final db = await _db.database;
     await db.update(_routines, {'is_enabled': enabled ? 1 : 0},
         where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> logRun(
+    String routineId, {
+    required int stepsDone,
+    required int stepsTotal,
+    required DateTime startedAt,
+    DateTime? completedAt,
+  }) async {
+    final db = await _db.database;
+    await db.insert(AppConstants.routineRunsTable, {
+      'id': const Uuid().v4(),
+      'routine_id': routineId,
+      'started_at': startedAt.millisecondsSinceEpoch,
+      'completed_at': completedAt?.millisecondsSinceEpoch,
+      'steps_done': stepsDone,
+      'steps_total': stepsTotal,
+    });
   }
 
   // --- mapping helpers (row <-> entity) ---

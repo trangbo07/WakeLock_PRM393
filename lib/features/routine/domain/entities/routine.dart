@@ -2,7 +2,20 @@ import 'package:equatable/equatable.dart';
 
 /// A step type in a morning routine. Stored as the enum name in
 /// routine_steps.type (SQLite). Add new kinds here as UIs are built.
-enum RoutineStepType { water, teeth, stretch, meditate, journal, tasks, pomodoro }
+enum RoutineStepType {
+  water('Uống nước'),
+  teeth('Đánh răng'),
+  stretch('Giãn cơ'),
+  meditate('Thiền'),
+  journal('Nhật ký'),
+  tasks('Việc cần làm'),
+  pomodoro('Pomodoro');
+
+  const RoutineStepType(this.label);
+
+  /// Short Vietnamese label shown in pickers and the execute screen.
+  final String label;
+}
 
 /// One step of a routine (e.g. "drink water", "meditate 5 min").
 class RoutineStep extends Equatable {
