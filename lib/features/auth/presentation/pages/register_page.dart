@@ -7,6 +7,7 @@ import '../../../profile/domain/entities/user_profile.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_header.dart';
+import 'complete_profile_page.dart';
 
 /// Email/password registration. On success it creates a starter Firestore
 /// profile (`users/{uid}`) then pops. Username uniqueness / avatar come later
@@ -54,8 +55,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 displayName: _name.text.trim(),
               ),
             );
-      } catch (_) {/* profile doc can be created later in Complete Profile */}
-      if (mounted) Navigator.of(context).pop();
+      } catch (_) {/* profile doc can be refined in Complete Profile */}
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(builder: (_) => const CompleteProfilePage()),
+        );
+      }
     } catch (e) {
       _toast('Đăng ký thất bại: ${_readable(e)}');
     } finally {

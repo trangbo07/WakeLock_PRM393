@@ -22,6 +22,30 @@ class FirestoreProfileRepository implements ProfileRepository {
   @override
   Future<void> upsertProfile(UserProfile p) => _ds.upsert(p.uid, _toMap(p));
 
+  @override
+  Future<bool> reserveUsername(String username, String uid) =>
+      _ds.reserveUsername(username, uid);
+
+  @override
+  Future<String> uploadAvatar(String uid, String filePath) =>
+      _ds.uploadAvatar(uid, filePath);
+
+  @override
+  Future<void> updateProfileFields(
+    String uid, {
+    String? username,
+    String? displayName,
+    String? avatarUrl,
+    String? bio,
+  }) {
+    final data = <String, dynamic>{};
+    if (username != null) data['username'] = username;
+    if (displayName != null) data['displayName'] = displayName;
+    if (avatarUrl != null) data['avatarUrl'] = avatarUrl;
+    if (bio != null) data['bio'] = bio;
+    return _ds.upsert(uid, data);
+  }
+
   UserProfile _fromMap(String uid, Map<String, dynamic> m) => UserProfile(
         uid: uid,
         username: m['username'] as String? ?? '',
