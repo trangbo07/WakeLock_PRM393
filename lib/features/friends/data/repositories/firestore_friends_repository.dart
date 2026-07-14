@@ -102,5 +102,6 @@ class FirestoreFriendsRepository implements FriendsRepository {
         xp: (m['xp'] as num?)?.toInt() ?? 0,
         level: (m['level'] as num?)?.toInt() ?? 1,
         wakeRate: (m['wakeRate'] as num?)?.toDouble() ?? 0,
+        photosShared: (m['photosShared'] as num?)?.toInt() ?? 0,
       );
 }

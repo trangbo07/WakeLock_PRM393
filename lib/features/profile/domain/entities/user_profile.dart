@@ -15,6 +15,7 @@ class UserProfile extends Equatable {
     this.xp = 0,
     this.level = 1,
     this.wakeRate = 0,
+    this.photosShared = 0,
   });
 
   final String uid;
@@ -36,6 +37,9 @@ class UserProfile extends Equatable {
   /// Wake-success rate 0..1 (synced from Dev 1's streak stats).
   final double wakeRate;
 
+  /// Number of morning photos shared (denormalized for the profile header).
+  final int photosShared;
+
   UserProfile copyWith({
     String? username,
     String? displayName,
@@ -47,6 +51,7 @@ class UserProfile extends Equatable {
     int? xp,
     int? level,
     double? wakeRate,
+    int? photosShared,
   }) =>
       UserProfile(
         uid: uid,
@@ -60,6 +65,7 @@ class UserProfile extends Equatable {
         xp: xp ?? this.xp,
         level: level ?? this.level,
         wakeRate: wakeRate ?? this.wakeRate,
+        photosShared: photosShared ?? this.photosShared,
       );
 
   @override
@@ -75,5 +81,6 @@ class UserProfile extends Equatable {
         xp,
         level,
         wakeRate,
+        photosShared,
       ];
 }

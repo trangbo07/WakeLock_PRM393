@@ -203,6 +203,24 @@ class _ProfileView extends ConsumerWidget {
               }
             },
           ),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.delete_sweep_outlined,
+                color: AppColors.destructive),
+            label: const Text('Xoá dữ liệu mẫu (dev)',
+                style: TextStyle(color: AppColors.destructive)),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                await SampleDataSeeder().clearSeed(myUid: user.uid);
+                messenger.showSnackBar(
+                    const SnackBar(content: Text('Đã xoá dữ liệu mẫu')));
+              } catch (e) {
+                messenger
+                    .showSnackBar(SnackBar(content: Text('Xoá lỗi: $e')));
+              }
+            },
+          ),
         ],
       ],
     );
