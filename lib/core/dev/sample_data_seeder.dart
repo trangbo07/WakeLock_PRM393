@@ -155,6 +155,54 @@ class SampleDataSeeder {
       }
     }
     await feed.commit();
+
+    // 5) Sample challenges: one active (I can check in), one already ended.
+    final challengeSeeds = [
+      {
+        'id': 'seed_challenge_0',
+        'title': 'Thử thách dậy sớm 7 ngày',
+        'days': 7,
+        'start': now.subtract(const Duration(days: 2)),
+        'end': now.add(const Duration(days: 5)),
+        'scores': {'seed_linh': 6, 'seed_nam': 5, myUid: 4, 'seed_quan': 3},
+      },
+      {
+        'id': 'seed_challenge_1',
+        'title': 'Cuối tuần không ngủ nướng',
+        'days': 3,
+        'start': now.subtract(const Duration(days: 5)),
+        'end': now.subtract(const Duration(days: 2)),
+        'scores': {'seed_linh': 3, myUid: 2, 'seed_phuong': 1},
+      },
+    ];
+    final ch = _db.batch();
+    for (final c in challengeSeeds) {
+      final scores = c['scores'] as Map<String, int>;
+      final ref = _db.collection('challenges').doc(c['id'] as String);
+      ch.set(ref, {
+        'title': c['title'],
+        'days': c['days'],
+        'createdBy': myUid,
+        'startAt': Timestamp.fromDate(c['start'] as DateTime),
+        'endAt': Timestamp.fromDate(c['end'] as DateTime),
+        'participantUids': scores.keys.toList(),
+      });
+      scores.forEach((uid, score) {
+        final isMe = uid == myUid;
+        final person = isMe ? null : _person(uid);
+        ch.set(ref.collection('participants').doc(uid), {
+          'name': isMe ? myName : person!['name'],
+          'username': isMe ? myUsername : person!['username'],
+          'avatarUrl': isMe ? null : person!['avatar'],
+          'score': score,
+          // Friends checked in yesterday; leave mine null so I can check in.
+          'lastCheckIn': isMe
+              ? null
+              : Timestamp.fromDate(now.subtract(const Duration(days: 1))),
+        });
+      });
+    }
+    await ch.commit();
   }
 
   /// Remove all seeded artifacts: seed users + username index, my friend
@@ -204,6 +252,18 @@ class SampleDataSeeder {
         }
         await b.commit();
       }
+      await ref.delete();
+    }
+
+    // Seed challenges + their participants subcollection.
+    for (final id in ['seed_challenge_0', 'seed_challenge_1']) {
+      final ref = _db.collection('challenges').doc(id);
+      final parts = await ref.collection('participants').get();
+      final b = _db.batch();
+      for (final d in parts.docs) {
+        b.delete(d.reference);
+      }
+      await b.commit();
       await ref.delete();
     }
   }

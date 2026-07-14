@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/domain/entities/user_profile.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/avatar_image.dart';
+import '../../../challenge/presentation/pages/challenge_list_page.dart';
 import '../../domain/entities/friend.dart';
 import '../providers/friends_providers.dart';
 import 'add_friend_page.dart';
@@ -31,7 +32,19 @@ class FriendsPage extends ConsumerWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Bạn bè')),
+        appBar: AppBar(
+          title: const Text('Bạn bè'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.emoji_events_outlined),
+              tooltip: 'Thử thách',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const ChallengeListPage()),
+              ),
+            ),
+          ],
+        ),
         body: Column(
           children: [
             _PillTabs(
