@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/design_tokens.dart';
-import '../../../../shared/widgets/app_primary_button.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/domain/entities/user_profile.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/avatar_image.dart';
 import '../providers/friends_providers.dart';
 
-/// Send a friend request to [target], with a short message. Shows a
-/// confirmation once sent.
+const _kInviteMessage = 'Mình muốn kết bạn với bạn trên WakeLock!';
+
+/// Send a friend request to [target]. Shows a confirmation once sent
+/// (matches the "Gửi lời mời" → "Chờ xác nhận" mockups).
 class SendInvitePage extends ConsumerStatefulWidget {
   const SendInvitePage({super.key, required this.target});
 
@@ -22,21 +23,12 @@ class SendInvitePage extends ConsumerStatefulWidget {
 }
 
 class _SendInvitePageState extends ConsumerState<SendInvitePage> {
-  final _message =
-      TextEditingController(text: 'Mình muốn kết bạn với bạn trên WakeLock!');
   bool _busy = false;
   bool _sent = false;
-
-  @override
-  void dispose() {
-    _message.dispose();
-    super.dispose();
-  }
 
   Future<void> _send() async {
     final user = ref.read(sessionProvider).asData?.value;
     if (user == null) return;
-    FocusScope.of(context).unfocus();
     setState(() => _busy = true);
     try {
       final me = ref.read(myProfileProvider).asData?.value ??
@@ -44,7 +36,7 @@ class _SendInvitePageState extends ConsumerState<SendInvitePage> {
       await ref.read(friendsRepositoryProvider).sendRequest(
             me: me,
             toUid: widget.target.uid,
-            message: _message.text.trim(),
+            message: _kInviteMessage,
           );
       if (mounted) setState(() => _sent = true);
     } catch (e) {
@@ -61,58 +53,73 @@ class _SendInvitePageState extends ConsumerState<SendInvitePage> {
   Widget build(BuildContext context) {
     final t = widget.target;
     final theme = Theme.of(context);
+    final name = t.displayName.isEmpty ? '@${t.username}' : t.displayName;
+
     return Scaffold(
       appBar: AppBar(title: Text(_sent ? 'Chờ xác nhận' : 'Gửi lời mời')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child: _sent ? _SentView(name: t.displayName.isEmpty ? t.username : t.displayName) : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppSpacing.md),
-              Center(
-                child: CircleAvatar(
-                  radius: 46,
-                  backgroundColor: AppColors.surfaceMuted,
-                  backgroundImage: avatarImageProvider(
-                      base64Data: t.avatarBase64, url: t.avatarUrl),
-                  child: (t.avatarBase64 == null && (t.avatarUrl ?? '').isEmpty)
-                      ? Text(
-                          _initial(t.displayName.isEmpty ? t.username : t.displayName),
-                          style: theme.textTheme.headlineMedium
-                              ?.copyWith(color: AppColors.primary))
-                      : null,
+          child: _sent
+              ? _SentView(name: name)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.lg),
+                    Center(
+                      child: CircleAvatar(
+                        radius: 52,
+                        backgroundColor: AppColors.surfaceMuted,
+                        backgroundImage: avatarImageProvider(
+                            base64Data: t.avatarBase64, url: t.avatarUrl),
+                        child: (t.avatarBase64 == null &&
+                                (t.avatarUrl ?? '').isEmpty)
+                            ? Text(_initial(name),
+                                style: theme.textTheme.headlineMedium
+                                    ?.copyWith(color: AppColors.primary))
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Center(
+                      child: Text(name,
+                          style: theme.textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700)),
+                    ),
+                    if (t.username.isNotEmpty)
+                      Center(
+                        child: Text('@${t.username}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant)),
+                      ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Lời mời kết bạn',
+                              style: theme.textTheme.labelLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(_kInviteMessage,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant)),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    _IndigoButton(
+                      label: _busy ? 'Đang gửi…' : 'Gửi lời mời',
+                      onPressed: _busy ? null : _send,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Center(
-                child: Text(t.displayName.isEmpty ? '@${t.username}' : t.displayName,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-              ),
-              if (t.username.isNotEmpty)
-                Center(
-                  child: Text('@${t.username}',
-                      style: theme.textTheme.bodyMedium
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                ),
-              const SizedBox(height: AppSpacing.xl),
-              TextField(
-                controller: _message,
-                maxLines: 3,
-                maxLength: 120,
-                decoration: const InputDecoration(
-                  labelText: 'Lời nhắn kết bạn',
-                  alignLabelWithHint: true,
-                ),
-              ),
-              const Spacer(),
-              AppPrimaryButton(
-                label: _busy ? 'Đang gửi…' : 'Gửi lời mời',
-                onPressed: _busy ? null : _send,
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -130,7 +137,7 @@ class _SentView extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(Icons.mark_email_read_outlined,
-            size: 88, color: AppColors.primary),
+            size: 96, color: AppColors.accent),
         const SizedBox(height: AppSpacing.lg),
         Text('Lời mời đã gửi!',
             style: theme.textTheme.headlineSmall
@@ -143,12 +150,36 @@ class _SentView extends StatelessWidget {
               ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: AppSpacing.xl),
-        AppPrimaryButton(
+        _IndigoButton(
           label: 'Xong',
-          onPressed: () =>
-              Navigator.of(context).popUntil((r) => r.isFirst),
+          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
         ),
       ],
+    );
+  }
+}
+
+/// Full-width indigo button (matches the Friends CTA style).
+class _IndigoButton extends StatelessWidget {
+  const _IndigoButton({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg)),
+        ),
+        onPressed: onPressed,
+        child: Text(label),
+      ),
     );
   }
 }

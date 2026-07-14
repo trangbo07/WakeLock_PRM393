@@ -22,6 +22,22 @@ class SampleDataSeeder {
     {'uid': 'seed_hoang', 'username': 'hoang', 'name': 'Hoàng', 'bio': '', 'streak': 1, 'longest': 7, 'xp': 40, 'level': 1, 'wake': 0.50, 'photos': 3, 'avatar': 'https://i.pravatar.cc/150?img=68'},
   ];
 
+  /// Sample morning-photo posts. Authors are among the first 4 (my friends) so
+  /// the "Bạn bè" tab is populated. Photos load from picsum (network).
+  static const List<Map<String, dynamic>> posts = [
+    {'author': 'seed_linh', 'caption': 'Chào buổi sáng! Dậy lúc 5:30 ☀️', 'reactors': ['seed_nam', 'seed_quan', 'seed_phuong'], 'comments': [{'uid': 'seed_nam', 'text': 'Đỉnh quá! 🔥'}, {'uid': 'seed_phuong', 'text': 'Ghen tị ghê 😍'}]},
+    {'author': 'seed_nam', 'caption': 'Cà phê và bình minh ☕', 'reactors': ['seed_linh', 'seed_khoa'], 'comments': [{'uid': 'seed_linh', 'text': 'Nhìn ngon thế 😋'}]},
+    {'author': 'seed_quan', 'caption': 'Chạy bộ 5km xong, sảng khoái 🏃', 'reactors': ['seed_linh', 'seed_nam', 'seed_phuong', 'seed_khoa'], 'comments': [{'uid': 'seed_quan', 'text': 'Ai chạy cùng mai không?'}]},
+    {'author': 'seed_phuong', 'caption': 'Thiền 10 phút đầu ngày 🧘‍♀️', 'reactors': ['seed_linh'], 'comments': []},
+    {'author': 'seed_linh', 'caption': 'Không snooze hôm nay 💪', 'reactors': ['seed_nam', 'seed_quan'], 'comments': [{'uid': 'seed_khoa', 'text': 'Quá xịn 👏'}]},
+    {'author': 'seed_khoa', 'caption': 'Trời đẹp quá, dậy sớm thật đáng!', 'reactors': ['seed_phuong', 'seed_linh'], 'comments': []},
+  ];
+
+  static const List<String> _reactEmojis = ['❤️', '🔥', '💪', '😍', '😮', '😂'];
+
+  Map<String, dynamic> _person(String uid) =>
+      people.firstWhere((p) => p['uid'] == uid);
+
   Future<void> seed({
     required String myUid,
     required String myName,
@@ -93,6 +109,52 @@ class SampleDataSeeder {
         'createdAt': FieldValue.serverTimestamp(),
       });
     }
+
+    // 4) Sample feed posts + their reactions/comments. Deterministic doc ids
+    // ('seed_post_i', reactor uid, 'seed_c_j') keep re-runs idempotent.
+    final now = DateTime.now();
+    final feed = _db.batch();
+    for (var i = 0; i < posts.length; i++) {
+      final post = posts[i];
+      final author = _person(post['author'] as String);
+      final reactors = (post['reactors'] as List).cast<String>();
+      final comments = (post['comments'] as List).cast<Map<String, dynamic>>();
+      final ref = _db.collection('posts').doc('seed_post_$i');
+
+      feed.set(ref, {
+        'authorUid': author['uid'],
+        'authorName': author['name'],
+        'authorUsername': author['username'],
+        'authorAvatarUrl': author['avatar'],
+        'photoUrl': 'https://picsum.photos/seed/wl_post_$i/600/600',
+        'caption': post['caption'],
+        'reactionCount': reactors.length,
+        'commentCount': comments.length,
+        // Stagger timestamps so the feed has a sensible newest-first order.
+        'createdAt': Timestamp.fromDate(now.subtract(Duration(minutes: i * 47))),
+      });
+
+      for (var r = 0; r < reactors.length; r++) {
+        final person = _person(reactors[r]);
+        feed.set(ref.collection('reactions').doc(reactors[r]), {
+          'name': person['name'],
+          'avatarUrl': person['avatar'],
+          'emoji': _reactEmojis[r % _reactEmojis.length],
+        });
+      }
+      for (var c = 0; c < comments.length; c++) {
+        final person = _person(comments[c]['uid'] as String);
+        feed.set(ref.collection('comments').doc('seed_c_$c'), {
+          'uid': person['uid'],
+          'name': person['name'],
+          'avatarUrl': person['avatar'],
+          'text': comments[c]['text'],
+          'createdAt':
+              Timestamp.fromDate(now.subtract(Duration(minutes: i * 47 - c))),
+        });
+      }
+    }
+    await feed.commit();
   }
 
   /// Remove all seeded artifacts: seed users + username index, my friend
@@ -130,5 +192,19 @@ class SampleDataSeeder {
           _db.collection('users').doc(uid).collection('friends').doc(myUid));
     }
     await b3.commit();
+
+    // Seed posts + their reactions/comments subcollections.
+    for (var i = 0; i < posts.length; i++) {
+      final ref = _db.collection('posts').doc('seed_post_$i');
+      for (final sub in ['reactions', 'comments']) {
+        final docs = await ref.collection(sub).get();
+        final b = _db.batch();
+        for (final d in docs.docs) {
+          b.delete(d.reference);
+        }
+        await b.commit();
+      }
+      await ref.delete();
+    }
   }
 }
