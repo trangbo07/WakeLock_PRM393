@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/streak_calculator.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/design_tokens.dart';
 import '../providers/streak_providers.dart';
 import '../widgets/streak_calendar_heatmap.dart';
 
@@ -21,13 +22,50 @@ class StreakPage extends ConsumerWidget {
         data: (stats) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(wakeEventListProvider),
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.md),
             children: [
-              _StatsRow(stats: stats),
-              const SizedBox(height: 24),
-              Text('Tháng này', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              StreakCalendarHeatmap(month: DateTime.now(), calendarByDay: stats.calendarByDay),
+              _StreakHero(current: stats.current),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  _StatCard(
+                    icon: Icons.emoji_events,
+                    color: AppColors.accent,
+                    label: 'Dài nhất',
+                    value: '${stats.longest} ngày',
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  _StatCard(
+                    icon: Icons.wb_sunny,
+                    color: const Color(0xFF0EA5E9),
+                    label: 'Tỷ lệ đúng giờ',
+                    value: '${stats.wakeRatePercent.round()}%',
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tháng này',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: AppSpacing.md),
+                    StreakCalendarHeatmap(
+                        month: DateTime.now(),
+                        calendarByDay: stats.calendarByDay),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -36,46 +74,103 @@ class StreakPage extends ConsumerWidget {
   }
 }
 
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.stats});
-
-  final StreakStats stats;
+/// Big current-streak banner with an amber flame gradient.
+class _StreakHero extends StatelessWidget {
+  const _StreakHero({required this.current});
+  final int current;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _StatCard(label: 'Streak hiện tại', value: '${stats.current} ngày')),
-        const SizedBox(width: 12),
-        Expanded(child: _StatCard(label: 'Streak dài nhất', value: '${stats.longest} ngày')),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(label: 'Tỷ lệ thức đúng giờ', value: '${stats.wakeRatePercent.round()}%'),
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-      ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.4),
+              blurRadius: 18,
+              offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_fire_department,
+              color: Colors.white, size: 48),
+          const SizedBox(width: AppSpacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('$current',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                      color: Colors.white, fontWeight: FontWeight.w900)),
+              const Text('ngày liên tiếp',
+                  style: TextStyle(color: Colors.white, fontSize: 15)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.value,
+  });
 
+  final IconData icon;
+  final Color color;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
           children: [
-            Text(value, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800)),
+                  Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                ],
+              ),
             ),
           ],
         ),

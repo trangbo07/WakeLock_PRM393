@@ -24,11 +24,19 @@ class MorningPhotoPage extends ConsumerWidget {
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Text(
-                    'Chưa có ảnh buổi sáng nào.\nẢnh sẽ được gợi ý chụp sau khi bạn tắt báo thức.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.photo_camera_outlined,
+                          size: 64, color: theme.colorScheme.onSurfaceVariant),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Chưa có ảnh buổi sáng nào.\nẢnh sẽ được gợi ý chụp sau khi bạn tắt báo thức.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
                 ),
               )

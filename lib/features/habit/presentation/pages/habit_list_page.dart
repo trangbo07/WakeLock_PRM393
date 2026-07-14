@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/design_tokens.dart';
 import '../../../ai_coach/presentation/pages/ai_coach_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../../../emergency/presentation/pages/emergency_contacts_page.dart';
@@ -111,17 +112,21 @@ class _HabitTile extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => HabitDetailPage(habit: habit)),
-            );
-            ref.invalidate(habitListProvider);
-          },
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => HabitDetailPage(habit: habit)),
+          );
+          ref.invalidate(habitListProvider);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -241,22 +246,25 @@ class _NavCardRow extends StatelessWidget {
       (Icons.sos_rounded, const Color(0xFFEF4444), 'Khẩn cấp',
           (_) => const EmergencyContactsPage()),
     ];
-    return SizedBox(
-      height: 100,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, i) {
-          final (icon, color, label, builder) = items[i];
-          return _NavCard(
-            icon: icon,
-            color: color,
-            label: label,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: builder)),
-          );
-        },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: AppSpacing.sm,
+        crossAxisSpacing: AppSpacing.sm,
+        childAspectRatio: 1.15,
+        children: [
+          for (final (icon, color, label, builder) in items)
+            _NavCard(
+              icon: icon,
+              color: color,
+              label: label,
+              onTap: () =>
+                  Navigator.push(context, MaterialPageRoute(builder: builder)),
+            ),
+        ],
       ),
     );
   }
@@ -277,33 +285,33 @@ class _NavCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 76,
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                const SizedBox(height: 6),
-                Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11)),
-              ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, color: color, size: 20),
             ),
-          ),
+            const SizedBox(height: 6),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11)),
+          ],
         ),
       ),
     );

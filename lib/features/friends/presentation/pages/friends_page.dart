@@ -77,7 +77,7 @@ class FriendsPage extends ConsumerWidget {
             height: 52,
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.lg)),
@@ -95,7 +95,7 @@ class FriendsPage extends ConsumerWidget {
   }
 }
 
-/// Segmented pill tab bar (selected tab = filled indigo pill).
+/// Segmented pill tab bar (selected tab = filled amber pill).
 class _PillTabs extends StatelessWidget {
   const _PillTabs({required this.labels});
   final List<String> labels;
@@ -112,7 +112,7 @@ class _PillTabs extends StatelessWidget {
       ),
       child: TabBar(
         indicator: BoxDecoration(
-          color: AppColors.accent,
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
@@ -255,7 +255,7 @@ class _RequestsList extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.check_circle, color: AppColors.accent),
+                icon: const Icon(Icons.check_circle, color: AppColors.primary),
                 tooltip: 'Chấp nhận',
                 onPressed: () => _accept(ref, r),
               ),

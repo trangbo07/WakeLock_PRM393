@@ -37,13 +37,66 @@ class FeedPage extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Feed'),
           actions: const [NotificationBell()],
-          bottom: const TabBar(
-            indicatorColor: AppColors.accent,
-            labelColor: AppColors.accent,
-            tabs: [
-              Tab(text: 'Bạn bè'),
-              Tab(text: 'Gần đây'),
-            ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: TabBar(
+                  indicator: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  splashBorderRadius: BorderRadius.circular(AppRadius.pill),
+                  labelColor: AppColors.onPrimary,
+                  unselectedLabelColor: AppColors.mutedForeground,
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14),
+                  unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 14),
+                  tabs: const [
+                    Tab(
+                      height: 40,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.people_alt_rounded, size: 18),
+                          SizedBox(width: 6),
+                          Text('Bạn bè'),
+                        ],
+                      ),
+                    ),
+                    Tab(
+                      height: 40,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.explore_rounded, size: 18),
+                          SizedBox(width: 6),
+                          Text('Đề xuất'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         body: const TabBarView(
@@ -52,14 +105,14 @@ class FeedPage extends ConsumerWidget {
             _FeedList(friendsOnly: false),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: FloatingActionButton(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
-          icon: const Icon(Icons.add_a_photo_outlined),
-          label: const Text('Đăng ảnh'),
+          tooltip: 'Đăng ảnh',
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ComposePostPage()),
           ),
+          child: const Icon(Icons.add_a_photo_outlined),
         ),
       ),
     );

@@ -3,6 +3,8 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/design_tokens.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/emergency_contact.dart';
 import '../providers/emergency_providers.dart';
@@ -65,40 +67,88 @@ class EmergencyContactsPage extends ConsumerWidget {
         data: (contacts) => contacts.isEmpty
             ? Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Text(
-                    'Chưa có liên hệ khẩn cấp nào.\nThêm người thân để có thể gọi/nhắn tin khi cần trợ giúp lúc báo thức reo.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.contact_emergency_outlined,
+                          size: 64, color: AppColors.destructive),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text('Chưa có liên hệ khẩn cấp',
+                          style: theme.textTheme.titleLarge),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        'Thêm người thân để gọi/nhắn tin khi cần trợ giúp lúc báo thức reo.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: AppColors.mutedForeground),
+                      ),
+                    ],
                   ),
                 ),
               )
             : ListView.builder(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 itemCount: contacts.length,
                 itemBuilder: (_, i) {
                   final c = contacts[i];
-                  return Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.person),
-                      title: Text(c.name),
-                      subtitle: Text(c.phone),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () async {
-                          await ref.read(emergencyContactRepositoryProvider).deleteContact(c.id);
-                          ref.invalidate(emergencyContactListProvider);
-                        },
-                      ),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor:
+                              AppColors.destructive.withValues(alpha: 0.18),
+                          child: Text(
+                            c.name.isEmpty ? '?' : c.name[0].toUpperCase(),
+                            style: const TextStyle(
+                                color: AppColors.destructive,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(c.name,
+                                  style: theme.textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 2),
+                              Text(c.phone,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.mutedForeground)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: AppColors.destructive),
+                          onPressed: () async {
+                            await ref
+                                .read(emergencyContactRepositoryProvider)
+                                .deleteContact(c.id);
+                            ref.invalidate(emergencyContactListProvider);
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },
               ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
         onPressed: () => _addFromContacts(context, ref),
-        child: const Icon(Icons.person_add),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Thêm liên hệ'),
       ),
     );
   }

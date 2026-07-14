@@ -29,22 +29,16 @@ class SettingsPage extends StatelessWidget {
             icon: Icons.tune,
             color: AppColors.mutedForeground,
             title: 'Chung',
-            onTap: () => _soon(context, 'Chung'),
+            subtitle: 'Quyền để báo thức không thể bị tắt',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const PermissionsPage()),
+            ),
           ),
           _SettingRow(
             icon: Icons.volume_up_outlined,
             color: const Color(0xFF0EA5E9),
             title: 'Âm báo & Rung',
             onTap: () => _soon(context, 'Âm báo & Rung'),
-          ),
-          _SettingRow(
-            icon: Icons.shield_outlined,
-            color: AppColors.primary,
-            title: 'Chống tắt ứng dụng',
-            subtitle: 'Quyền để báo thức không thể bị tắt',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const PermissionsPage()),
-            ),
           ),
           _SettingRow(
             icon: Icons.backup_outlined,

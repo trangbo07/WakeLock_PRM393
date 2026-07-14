@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/design_tokens.dart';
 import '../../../../core/utils/date_time_utils.dart';
 import '../../../task/domain/entities/dismiss_task.dart';
 import '../../domain/entities/alarm.dart';
@@ -30,12 +32,17 @@ class AlarmTile extends StatelessWidget {
     // Dim disabled alarms so the enabled ones stand out at a glance.
     final opacity = alarm.isEnabled ? 1.0 : 0.45;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+          ),
           padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
           child: Row(
             children: [
@@ -92,7 +99,7 @@ class _TaskChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(_icons[type], size: 16, color: theme.colorScheme.tertiary),
+        Icon(_icons[type], size: 16, color: AppColors.accent),
         const SizedBox(width: 4),
         Text(type.label, style: theme.textTheme.labelMedium),
       ],

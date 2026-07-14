@@ -14,6 +14,13 @@ import '../providers/profile_providers.dart';
 import '../widgets/avatar_image.dart';
 import 'edit_profile_page.dart';
 
+/// XP needed to gain one level. Level/progress derive from total XP so the
+/// header can show a "progress to next level" bar without a stored level.
+const int _xpPerLevel = 500;
+int _levelFor(int xp) => xp ~/ _xpPerLevel + 1;
+int _xpToNext(int xp) => _xpPerLevel - (xp % _xpPerLevel);
+double _levelProgress(int xp) => (xp % _xpPerLevel) / _xpPerLevel;
+
 /// Profile tab. Login-optional: guests see a sign-in prompt (offline alarm
 /// features keep working); signed-in users see their profile + stats.
 class ProfilePage extends ConsumerWidget {
@@ -23,18 +30,7 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hồ sơ'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Cài đặt',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Hồ sơ')),
       body: session.when(
         data: (user) =>
             user == null ? const _GuestView() : _ProfileView(user: user),
@@ -91,7 +87,8 @@ class _GuestView extends StatelessWidget {
   }
 }
 
-/// Signed-in profile: identity header, stat tiles, edit + sign out.
+/// Signed-in profile: identity header w/ level progress, stat row, and a
+/// grouped action menu (game hub, edit, settings, sign out).
 class _ProfileView extends ConsumerWidget {
   const _ProfileView({required this.user});
 
@@ -99,13 +96,14 @@ class _ProfileView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(myProfileProvider);
-    final profile = profileAsync.asData?.value;
+    final profile = ref.watch(myProfileProvider).asData?.value;
 
     final name = (profile?.displayName.isNotEmpty ?? false)
         ? profile!.displayName
         : (user.displayName ?? 'Người dùng');
     final username = profile?.username ?? '';
+    final xp = profile?.xp ?? 0;
+    final coins = profile?.coins ?? 0;
     final avatar = avatarImageProvider(
       base64Data: profile?.avatarBase64,
       url: profile?.avatarUrl ?? user.photoUrl,
@@ -120,60 +118,43 @@ class _ProfileView extends ConsumerWidget {
           bio: profile?.bio ?? '',
           avatar: avatar,
           initial: _initial(name),
-          level: (profile?.xp ?? 0) ~/ 500 + 1,
+          xp: xp,
           streak: profile?.currentStreak ?? 0,
+          coins: coins,
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
-            _StatTile(
+            _MiniStat(
                 icon: Icons.local_fire_department,
                 color: AppColors.primary,
-                label: 'Streak',
-                value: '${profile?.currentStreak ?? 0}'),
-            const SizedBox(width: AppSpacing.md),
-            _StatTile(
+                value: '${profile?.currentStreak ?? 0}',
+                label: 'Streak'),
+            const SizedBox(width: AppSpacing.sm),
+            _MiniStat(
                 icon: Icons.emoji_events,
                 color: AppColors.accent,
-                label: 'Dài nhất',
-                value: '${profile?.longestStreak ?? 0}'),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Row(
-          children: [
-            _StatTile(
-                icon: Icons.military_tech,
-                color: const Color(0xFF22C55E),
-                label: 'Level',
-                value: '${(profile?.xp ?? 0) ~/ 500 + 1}'),
-            const SizedBox(width: AppSpacing.md),
-            _StatTile(
+                value: '${profile?.longestStreak ?? 0}',
+                label: 'Dài nhất'),
+            const SizedBox(width: AppSpacing.sm),
+            _MiniStat(
                 icon: Icons.wb_sunny,
                 color: const Color(0xFF0EA5E9),
-                label: 'Tỉ lệ dậy',
-                value: '${((profile?.wakeRate ?? 0) * 100).round()}%'),
+                value: '${((profile?.wakeRate ?? 0) * 100).round()}%',
+                label: 'Tỉ lệ dậy'),
+            const SizedBox(width: AppSpacing.sm),
+            _MiniStat(
+                icon: Icons.photo_library,
+                color: const Color(0xFF22C55E),
+                value: '${profile?.photosShared ?? 0}',
+                label: 'Ảnh'),
           ],
         ),
-        const SizedBox(height: AppSpacing.xl),
-        _GameEntryCard(
-          level: (profile?.xp ?? 0) ~/ 500 + 1,
-          coins: profile?.coins ?? 0,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.edit_outlined),
-          label: const Text('Chỉnh sửa hồ sơ'),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const EditProfilePage()),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        TextButton.icon(
-          icon: const Icon(Icons.logout, color: AppColors.destructive),
-          label: const Text('Đăng xuất',
-              style: TextStyle(color: AppColors.destructive)),
-          onPressed: () => ref.read(authRepositoryProvider).signOut(),
+        const SizedBox(height: AppSpacing.lg),
+        _ActionMenu(
+          level: _levelFor(xp),
+          coins: coins,
+          onSignOut: () => ref.read(authRepositoryProvider).signOut(),
         ),
       ],
     );
@@ -183,8 +164,8 @@ class _ProfileView extends ConsumerWidget {
       name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
 }
 
-/// Premium identity header: gradient banner, avatar with amber ring, name,
-/// @username, level + streak pills, and bio.
+/// Premium identity header: gradient banner, avatar w/ amber ring, name +
+/// @username, coin balance, a level-progress bar, streak pill, and bio.
 class _ProfileHero extends StatelessWidget {
   const _ProfileHero({
     required this.name,
@@ -192,8 +173,9 @@ class _ProfileHero extends StatelessWidget {
     required this.bio,
     required this.avatar,
     required this.initial,
-    required this.level,
+    required this.xp,
     required this.streak,
+    required this.coins,
   });
 
   final String name;
@@ -201,12 +183,14 @@ class _ProfileHero extends StatelessWidget {
   final String bio;
   final ImageProvider? avatar;
   final String initial;
-  final int level;
+  final int xp;
   final int streak;
+  final int coins;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final level = _levelFor(xp);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -219,61 +203,184 @@ class _ProfileHero extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary]),
-              boxShadow: [
-                BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.45),
-                    blurRadius: 18),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 44,
-              backgroundColor: AppColors.surfaceMuted,
-              backgroundImage: avatar,
-              child: avatar == null
-                  ? Text(initial,
-                      style: theme.textTheme.headlineMedium
-                          ?.copyWith(color: AppColors.primary))
-                  : null,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(name,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w800)),
-          if (username.isNotEmpty)
-            Text('@$username',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          const SizedBox(height: AppSpacing.sm),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HeroPill(
-                  icon: Icons.military_tech,
-                  label: 'Level $level',
-                  color: AppColors.accent),
+              _AvatarRing(avatar: avatar, initial: initial),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w800)),
+                    if (username.isNotEmpty)
+                      Text('@$username',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
+                    const SizedBox(height: AppSpacing.sm),
+                    _HeroPill(
+                        icon: Icons.local_fire_department,
+                        label: '$streak ngày',
+                        color: AppColors.primary),
+                  ],
+                ),
+              ),
               const SizedBox(width: AppSpacing.sm),
-              _HeroPill(
-                  icon: Icons.local_fire_department,
-                  label: '$streak ngày',
-                  color: AppColors.primary),
+              _CoinChip(coins: coins),
             ],
           ),
+          const SizedBox(height: AppSpacing.md),
+          _LevelBar(
+              level: level,
+              progress: _levelProgress(xp),
+              toNext: _xpToNext(xp)),
           if (bio.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.md),
-            Text(bio,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium),
+            Text(bio, style: theme.textTheme.bodyMedium),
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Avatar inside a glowing amber gradient ring.
+class _AvatarRing extends StatelessWidget {
+  const _AvatarRing({required this.avatar, required this.initial});
+
+  final ImageProvider? avatar;
+  final String initial;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+            colors: [AppColors.primary, AppColors.secondary]),
+        boxShadow: [
+          BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 16),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: 34,
+        backgroundColor: AppColors.surfaceMuted,
+        backgroundImage: avatar,
+        child: avatar == null
+            ? Text(initial,
+                style: theme.textTheme.headlineSmall
+                    ?.copyWith(color: AppColors.primary))
+            : null,
+      ),
+    );
+  }
+}
+
+/// Coin balance chip (amber, top-right of the header).
+class _CoinChip extends StatelessWidget {
+  const _CoinChip({required this.coins});
+  final int coins;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.monetization_on, size: 15, color: AppColors.primary),
+          const SizedBox(width: 4),
+          Text('$coins',
+              style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Level N" label + gradient progress bar toward the next level.
+class _LevelBar extends StatelessWidget {
+  const _LevelBar(
+      {required this.level, required this.progress, required this.toNext});
+
+  final int level;
+  final double progress;
+  final int toNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.military_tech,
+                    size: 16, color: AppColors.accent),
+                const SizedBox(width: 4),
+                Text('Level $level',
+                    style: const TextStyle(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13)),
+              ],
+            ),
+            Text('còn $toNext XP',
+                style: const TextStyle(
+                    color: AppColors.mutedForeground, fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 12,
+          width: double.infinity, // full-width track; fill overlays via FractionallySizedBox
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            // Lighter track so the bar stays visible even at 0% on the card.
+            color: Colors.white.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: progress.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.secondary]),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                boxShadow: [
+                  BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                      blurRadius: 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -310,59 +417,53 @@ class _HeroPill extends StatelessWidget {
   }
 }
 
-/// Gradient shortcut into the gamification hub (level, badges, shop).
-class _GameEntryCard extends StatelessWidget {
-  const _GameEntryCard({required this.level, required this.coins});
+/// Compact vertical stat tile (icon chip + value + label). Four fit in a row.
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.label,
+  });
 
-  final int level;
-  final int coins;
+  final IconData icon;
+  final Color color;
+  final String value;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const GameHomePage()),
-      ),
+    final theme = Theme.of(context);
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF6366F1), Color(0xFFD97706)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: [
-            BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.3),
-                blurRadius: 14,
-                offset: const Offset(0, 4)),
-          ],
+          border: Border.all(color: AppColors.border),
         ),
-        child: Row(
+        child: Column(
           children: [
-            const Icon(Icons.videogame_asset, color: Colors.white, size: 28),
-            const SizedBox(width: AppSpacing.md),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Trò chơi & Thành tích',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16)),
-                  Text('Nhiệm vụ · huy hiệu · cửa hàng',
-                      style: TextStyle(color: Colors.white70, fontSize: 12)),
-                ],
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
+              child: Icon(icon, color: color, size: 18),
             ),
-            Text('Lv $level · $coins 🪙',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w700)),
-            const SizedBox(width: AppSpacing.xs),
-            const Icon(Icons.chevron_right, color: Colors.white),
+            const SizedBox(height: 6),
+            Text(value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800)),
+            Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -370,60 +471,137 @@ class _GameEntryCard extends StatelessWidget {
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
+/// Grouped action list: game hub (with live level/coins), edit profile,
+/// settings, and sign out — one clear tap target per row.
+class _ActionMenu extends StatelessWidget {
+  const _ActionMenu(
+      {required this.level, required this.coins, required this.onSignOut});
+
+  final int level;
+  final int coins;
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          _MenuRow(
+            icon: Icons.videogame_asset,
+            color: AppColors.accent,
+            title: 'Trò chơi & Thành tích',
+            subtitle: 'Lv $level · $coins xu',
+            trailing: const Icon(Icons.chevron_right,
+                color: AppColors.mutedForeground),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const GameHomePage()),
+            ),
+          ),
+          const _MenuDivider(),
+          _MenuRow(
+            icon: Icons.edit_outlined,
+            color: AppColors.primary,
+            title: 'Chỉnh sửa hồ sơ',
+            trailing: const Icon(Icons.chevron_right,
+                color: AppColors.mutedForeground),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const EditProfilePage()),
+            ),
+          ),
+          const _MenuDivider(),
+          _MenuRow(
+            icon: Icons.settings_outlined,
+            color: AppColors.mutedForeground,
+            title: 'Cài đặt',
+            trailing: const Icon(Icons.chevron_right,
+                color: AppColors.mutedForeground),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+            ),
+          ),
+          const _MenuDivider(),
+          _MenuRow(
+            icon: Icons.logout,
+            color: AppColors.destructive,
+            title: 'Đăng xuất',
+            danger: true,
+            onTap: onSignOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuDivider extends StatelessWidget {
+  const _MenuDivider();
+
+  @override
+  Widget build(BuildContext context) =>
+      const Divider(height: 1, thickness: 1, color: AppColors.border);
+}
+
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({
     required this.icon,
     required this.color,
-    required this.label,
-    required this.value,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    this.trailing,
+    this.danger = false,
   });
 
   final IconData icon;
   final Color color;
-  final String label;
-  final String value;
+  final String title;
+  final VoidCallback onTap;
+  final String? subtitle;
+  final Widget? trailing;
+  final bool danger;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Expanded(
-      child: Container(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
         padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.md, horizontal: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
-        ),
+            horizontal: AppSpacing.md, vertical: 14),
         child: Row(
           children: [
             Container(
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(icon, color: color, size: 20),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w800)),
-                  Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  Text(title,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: danger ? AppColors.destructive : null)),
+                  if (subtitle != null)
+                    Text(subtitle!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),
+            ?trailing,
           ],
         ),
       ),
