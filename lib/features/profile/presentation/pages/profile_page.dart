@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/design_tokens.dart';
-import '../../../../core/dev/sample_data_seeder.dart';
 import '../../../../shared/widgets/app_primary_button.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/pages/login_page.dart';
@@ -177,46 +175,6 @@ class _ProfileView extends ConsumerWidget {
               style: TextStyle(color: AppColors.destructive)),
           onPressed: () => ref.read(authRepositoryProvider).signOut(),
         ),
-        if (kDebugMode) ...[
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.dataset_outlined),
-            label: const Text('Nạp dữ liệu mẫu (dev)'),
-            onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              try {
-                await SampleDataSeeder().seed(
-                  myUid: user.uid,
-                  myName: name,
-                  myUsername: username,
-                );
-                messenger.showSnackBar(
-                    const SnackBar(content: Text('Đã nạp dữ liệu mẫu')));
-              } catch (e) {
-                messenger.showSnackBar(
-                    SnackBar(content: Text('Nạp lỗi: $e')));
-              }
-            },
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.delete_sweep_outlined,
-                color: AppColors.destructive),
-            label: const Text('Xoá dữ liệu mẫu (dev)',
-                style: TextStyle(color: AppColors.destructive)),
-            onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              try {
-                await SampleDataSeeder().clearSeed(myUid: user.uid);
-                messenger.showSnackBar(
-                    const SnackBar(content: Text('Đã xoá dữ liệu mẫu')));
-              } catch (e) {
-                messenger
-                    .showSnackBar(SnackBar(content: Text('Xoá lỗi: $e')));
-              }
-            },
-          ),
-        ],
       ],
     );
   }
