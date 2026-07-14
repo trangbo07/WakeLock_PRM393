@@ -1,14 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/morning_photo_providers.dart';
+import 'morning_photo_capture_page.dart';
 
-/// Morning Photo entry (STARTER SCAFFOLD for Dev 1).
-///
-/// Real flow: Camera (camera-only, no gallery) → Preview → Caption →
-/// Mood/Weather → Privacy → save via morningPhotoRepositoryProvider.save(...).
-/// Data layer is wired; replace this UI with the capture flow from the design.
-/// Posting to the feed is Dev 2 (reads getUnposted() → uploads → markPosted()).
+/// Morning Photo gallery — grid of locally-saved photos + a FAB for a manual
+/// capture (outside the alarm-dismiss chain). Posting to the feed is Dev 2's
+/// job (reads getUnposted() → uploads → markPosted()).
 class MorningPhotoPage extends ConsumerWidget {
   const MorningPhotoPage({super.key});
 
@@ -19,17 +19,50 @@ class MorningPhotoPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Morning Photo')),
-      body: Center(
-        child: photosAsync.when(
-          data: (photos) => Text(
-            'Đã lưu ${photos.length} ảnh.\nMàn chụp ảnh (camera-only) sẽ dựng ở đây.',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          loading: () => const CircularProgressIndicator(),
-          error: (e, _) => Text('Lỗi: $e'),
-        ),
+      body: photosAsync.when(
+        data: (photos) => photos.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    'Chưa có ảnh buổi sáng nào.\nẢnh sẽ được gợi ý chụp sau khi bạn tắt báo thức.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () async => ref.invalidate(morningPhotoListProvider),
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 4,
+                    crossAxisSpacing: 4,
+                  ),
+                  itemCount: photos.length,
+                  itemBuilder: (_, i) {
+                    final photo = photos[i];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(File(photo.path), fit: BoxFit.cover),
+                    );
+                  },
+                ),
+              ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Lỗi: $e')),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MorningPhotoCapturePage()),
+          );
+          ref.invalidate(morningPhotoListProvider);
+        },
+        child: const Icon(Icons.camera_alt),
       ),
     );
   }
