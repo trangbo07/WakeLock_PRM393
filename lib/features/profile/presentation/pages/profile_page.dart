@@ -11,6 +11,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/avatar_image.dart';
+import 'edit_profile_page.dart';
 
 /// Profile tab. Login-optional: guests see a sign-in prompt (offline alarm
 /// features keep working); signed-in users see their profile + stats.
@@ -168,10 +169,9 @@ class _ProfileView extends ConsumerWidget {
         OutlinedButton.icon(
           icon: const Icon(Icons.edit_outlined),
           label: const Text('Chỉnh sửa hồ sơ'),
-          onPressed: () => ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(const SnackBar(
-                content: Text('Chỉnh sửa hồ sơ sắp ra mắt'))),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const EditProfilePage()),
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         TextButton.icon(
