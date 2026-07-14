@@ -11,6 +11,7 @@ import '../../../profile/domain/entities/user_profile.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/avatar_image.dart';
 import '../../../challenge/presentation/pages/challenge_list_page.dart';
+import '../../../leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../domain/entities/friend.dart';
 import '../providers/friends_providers.dart';
 import 'add_friend_page.dart';
@@ -35,6 +36,14 @@ class FriendsPage extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Bạn bè'),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.leaderboard_outlined),
+              tooltip: 'Bảng xếp hạng',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                    builder: (_) => const LeaderboardPage()),
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.emoji_events_outlined),
               tooltip: 'Thử thách',
