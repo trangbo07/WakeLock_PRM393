@@ -46,3 +46,7 @@ app.*.map.json
 
 # Environment secrets (Supabase keys)
 .env
+
+# Firebase CLI cache + service-account keys (never commit)
+.firebase/
+*firebase-adminsdk*.json
