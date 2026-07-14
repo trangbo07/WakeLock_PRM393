@@ -215,6 +215,32 @@ class SampleDataSeeder {
       });
     }
     await ch.commit();
+
+    // 6) Sample notifications in my inbox (mirror the real event types).
+    final notifs =
+        _db.collection('users').doc(myUid).collection('notifications');
+    final sampleNotifs = [
+      {'type': 'friend_request', 'title': 'Lời mời kết bạn mới', 'body': 'Minh Anh muốn kết bạn với bạn', 'actor': 'seed_minhanh', 'read': false, 'ago': 5},
+      {'type': 'reaction', 'title': 'Cảm xúc mới', 'body': 'Linh đã thả ❤️ vào bài của bạn', 'actor': 'seed_linh', 'read': false, 'ago': 40},
+      {'type': 'comment', 'title': 'Bình luận mới', 'body': 'Nam đã bình luận: "Đỉnh quá! 🔥"', 'actor': 'seed_nam', 'read': true, 'ago': 180},
+      {'type': 'friend_accept', 'title': 'Đã trở thành bạn bè', 'body': 'Quân đã chấp nhận lời mời của bạn', 'actor': 'seed_quan', 'read': true, 'ago': 600},
+    ];
+    final nb = _db.batch();
+    for (var i = 0; i < sampleNotifs.length; i++) {
+      final n = sampleNotifs[i];
+      final actor = _person(n['actor'] as String);
+      nb.set(notifs.doc('seed_notif_$i'), {
+        'type': n['type'],
+        'title': n['title'],
+        'body': n['body'],
+        'actorName': actor['name'],
+        'actorAvatarUrl': actor['avatar'],
+        'read': n['read'],
+        'createdAt':
+            Timestamp.fromDate(now.subtract(Duration(minutes: n['ago'] as int))),
+      });
+    }
+    await nb.commit();
   }
 
   /// Remove all seeded artifacts: seed users + username index, my friend
@@ -278,6 +304,15 @@ class SampleDataSeeder {
       await b.commit();
       await ref.delete();
     }
+
+    // Seeded notifications in my inbox.
+    final myNotifs =
+        _db.collection('users').doc(myUid).collection('notifications');
+    final nbc = _db.batch();
+    for (var i = 0; i < 4; i++) {
+      nbc.delete(myNotifs.doc('seed_notif_$i'));
+    }
+    await nbc.commit();
 
     // Reset the current user's seeded gamification stats back to defaults.
     await _db.collection('users').doc(myUid).set({

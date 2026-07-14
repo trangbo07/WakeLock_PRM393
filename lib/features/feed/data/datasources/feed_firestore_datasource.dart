@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../notifications/data/datasources/notifications_firestore_datasource.dart';
+
 /// Raw Firestore access for the feed (posts + comments + reactions).
 class FeedFirestoreDataSource {
   FeedFirestoreDataSource([FirebaseFirestore? db])
@@ -41,18 +43,69 @@ class FeedFirestoreDataSource {
     });
     batch.update(_posts.doc(postId), {'commentCount': FieldValue.increment(1)});
     await batch.commit();
+    await _notifyAuthor(
+      postId,
+      actorUid: data['uid'] as String?,
+      type: 'comment',
+      title: 'Bình luận mới',
+      body: '${data['name'] ?? 'Ai đó'} đã bình luận: "${data['text'] ?? ''}"',
+      actorName: data['name'] as String?,
+      actorAvatarUrl: data['avatarUrl'] as String?,
+      actorAvatarBase64: data['avatarBase64'] as String?,
+    );
+  }
+
+  /// Notify a post's author of activity (skips notifying the actor about their
+  /// own post). Best-effort.
+  Future<void> _notifyAuthor(
+    String postId, {
+    required String? actorUid,
+    required String type,
+    required String title,
+    required String body,
+    String? actorName,
+    String? actorAvatarUrl,
+    String? actorAvatarBase64,
+  }) async {
+    final post = await _posts.doc(postId).get();
+    final authorUid = post.data()?['authorUid'] as String?;
+    if (authorUid == null || authorUid.isEmpty || authorUid == actorUid) return;
+    await pushNotification(
+      _db,
+      authorUid,
+      type: type,
+      title: title,
+      body: body,
+      actorName: actorName,
+      actorAvatarUrl: actorAvatarUrl,
+      actorAvatarBase64: actorAvatarBase64,
+    );
   }
 
   Future<void> setReaction(
       String postId, String uid, Map<String, dynamic> data) async {
     final ref = _reactions(postId).doc(uid);
-    await _db.runTransaction((txn) async {
+    final isNew = await _db.runTransaction<bool>((txn) async {
       final existed = (await txn.get(ref)).exists;
       txn.set(ref, data);
       if (!existed) {
         txn.update(_posts.doc(postId), {'reactionCount': FieldValue.increment(1)});
       }
+      return !existed;
     });
+    // Only notify on a first-time reaction (not on emoji changes).
+    if (isNew) {
+      await _notifyAuthor(
+        postId,
+        actorUid: uid,
+        type: 'reaction',
+        title: 'Cảm xúc mới',
+        body: '${data['name'] ?? 'Ai đó'} đã thả ${data['emoji'] ?? '❤️'} vào bài của bạn',
+        actorName: data['name'] as String?,
+        actorAvatarUrl: data['avatarUrl'] as String?,
+        actorAvatarBase64: data['avatarBase64'] as String?,
+      );
+    }
   }
 
   Future<void> removeReaction(String postId, String uid) async {

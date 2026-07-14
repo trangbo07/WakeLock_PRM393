@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_primary_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../friends/presentation/providers/friends_providers.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../domain/entities/post.dart';
 import '../providers/feed_providers.dart';
 import '../widgets/post_card.dart';
@@ -29,6 +30,7 @@ class FeedPage extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Feed'),
+          actions: const [NotificationBell()],
           bottom: const TabBar(
             indicatorColor: AppColors.accent,
             labelColor: AppColors.accent,

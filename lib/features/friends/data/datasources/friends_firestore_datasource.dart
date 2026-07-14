@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../notifications/data/datasources/notifications_firestore_datasource.dart';
+
 /// Raw Firestore access for the friends graph. Returns plain maps; the
 /// repository maps to entities.
 class FriendsFirestoreDataSource {
@@ -34,7 +36,19 @@ class FriendsFirestoreDataSource {
     return snap.docs.map((d) => {'uid': d.id, ...d.data()}).toList();
   }
 
-  Future<void> addRequest(Map<String, dynamic> data) => _requests.add(data);
+  Future<void> addRequest(Map<String, dynamic> data) async {
+    await _requests.add(data);
+    // Notify the recipient of the incoming friend request.
+    await pushNotification(
+      _db,
+      data['to'] as String,
+      type: 'friend_request',
+      title: 'Lời mời kết bạn mới',
+      body: '${data['fromName'] ?? 'Ai đó'} muốn kết bạn với bạn',
+      actorName: data['fromName'] as String?,
+      actorAvatarBase64: data['fromAvatarBase64'] as String?,
+    );
+  }
 
   /// Accept: write both friend entries and delete the request atomically.
   Future<void> accept({
@@ -49,6 +63,16 @@ class FriendsFirestoreDataSource {
     batch.set(_friendsOf(otherUid).doc(myUid), myEntry);
     batch.delete(_requests.doc(requestId));
     await batch.commit();
+    // Notify the original requester that the request was accepted.
+    await pushNotification(
+      _db,
+      otherUid,
+      type: 'friend_accept',
+      title: 'Đã trở thành bạn bè',
+      body: '${myEntry['name'] ?? 'Ai đó'} đã chấp nhận lời mời của bạn',
+      actorName: myEntry['name'] as String?,
+      actorAvatarBase64: myEntry['avatarBase64'] as String?,
+    );
   }
 
   Future<void> deleteRequest(String id) => _requests.doc(id).delete();
