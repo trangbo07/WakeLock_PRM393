@@ -6,6 +6,7 @@ import '../../../../app/theme/design_tokens.dart';
 import '../../../profile/domain/entities/user_profile.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/avatar_image.dart';
+import 'friend_photos_page.dart';
 
 /// A friend's public profile: avatar, streak stats, a month calendar of
 /// wake-ups (derived from the current streak) and a morning-photo strip.
@@ -100,15 +101,30 @@ class _Content extends StatelessWidget {
             Text('Ảnh buổi sáng',
                 style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w600)),
-            Text('Xem tất cả',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: AppColors.accent)),
+            GestureDetector(
+              onTap: () => _openGallery(context, profile, name),
+              child: Text('Xem tất cả',
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.accent)),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        _PhotoStrip(uid: profile.uid, count: profile.photosShared),
+        GestureDetector(
+          onTap: profile.photosShared > 0
+              ? () => _openGallery(context, profile, name)
+              : null,
+          child: _PhotoStrip(uid: profile.uid, count: profile.photosShared),
+        ),
       ],
     );
+  }
+
+  void _openGallery(BuildContext context, UserProfile profile, String name) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => FriendPhotosPage(
+          uid: profile.uid, count: profile.photosShared, title: name),
+    ));
   }
 }
 
