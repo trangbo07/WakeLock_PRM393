@@ -159,10 +159,9 @@ class _FriendsList extends StatelessWidget {
     }
     final maxStreak =
         friends.fold<int>(0, (m, f) => f.streak > m ? f.streak : m);
-    return ListView.separated(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       itemCount: friends.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final f = friends[i];
         final isTop = f.streak > 0 && f.streak == maxStreak;
@@ -213,10 +212,9 @@ class _RequestsList extends ConsumerWidget {
       return const _Empty(
           icon: Icons.mail_outline, text: 'Không có lời mời nào.');
     }
-    return ListView.separated(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       itemCount: requests.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final r = requests[i];
         return ListTile(
