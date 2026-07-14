@@ -16,6 +16,9 @@ class UserProfile extends Equatable {
     this.level = 1,
     this.wakeRate = 0,
     this.photosShared = 0,
+    this.coins = 0,
+    this.ownedItems = const [],
+    this.dailyClaims = const {},
   });
 
   final String uid;
@@ -40,6 +43,15 @@ class UserProfile extends Equatable {
   /// Number of morning photos shared (denormalized for the profile header).
   final int photosShared;
 
+  /// In-app currency earned from missions, spent in the shop.
+  final int coins;
+
+  /// Ids of shop items the user owns (themes, sounds, frames…).
+  final List<String> ownedItems;
+
+  /// Daily mission id -> yyyy-mm-dd it was last claimed (once-per-day gate).
+  final Map<String, String> dailyClaims;
+
   UserProfile copyWith({
     String? username,
     String? displayName,
@@ -52,6 +64,9 @@ class UserProfile extends Equatable {
     int? level,
     double? wakeRate,
     int? photosShared,
+    int? coins,
+    List<String>? ownedItems,
+    Map<String, String>? dailyClaims,
   }) =>
       UserProfile(
         uid: uid,
@@ -66,6 +81,9 @@ class UserProfile extends Equatable {
         level: level ?? this.level,
         wakeRate: wakeRate ?? this.wakeRate,
         photosShared: photosShared ?? this.photosShared,
+        coins: coins ?? this.coins,
+        ownedItems: ownedItems ?? this.ownedItems,
+        dailyClaims: dailyClaims ?? this.dailyClaims,
       );
 
   @override
@@ -82,5 +100,8 @@ class UserProfile extends Equatable {
         level,
         wakeRate,
         photosShared,
+        coins,
+        ownedItems,
+        dailyClaims,
       ];
 }

@@ -43,6 +43,18 @@ class SampleDataSeeder {
     required String myName,
     required String myUsername,
   }) async {
+    // 0) Give the current user lively stats so gamification + leaderboard look
+    // real (merge — keeps username/displayName/avatar).
+    await _db.collection('users').doc(myUid).set({
+      'currentStreak': 14,
+      'longestStreak': 21,
+      'xp': 2450,
+      'level': 5,
+      'wakeRate': 0.82,
+      'photosShared': 42,
+      'coins': 1260,
+    }, SetOptions(merge: true));
+
     // 1) Sample user profiles + username index.
     final users = _db.batch();
     for (final p in people) {
@@ -266,5 +278,18 @@ class SampleDataSeeder {
       await b.commit();
       await ref.delete();
     }
+
+    // Reset the current user's seeded gamification stats back to defaults.
+    await _db.collection('users').doc(myUid).set({
+      'currentStreak': 0,
+      'longestStreak': 0,
+      'xp': 0,
+      'level': 1,
+      'wakeRate': 0,
+      'photosShared': 0,
+      'coins': 0,
+      'ownedItems': <String>[],
+      'dailyClaims': <String, String>{},
+    }, SetOptions(merge: true));
   }
 }
