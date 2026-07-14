@@ -82,6 +82,24 @@ class DismissTaskSelector extends StatelessWidget {
           ),
           onChanged: (s) => onChanged(value.copyWith(photoTag: s)),
         );
+      case DismissTaskType.memory:
+        return _LabeledSlider(
+          label: 'Số cặp thẻ: ${value.memoryPairs}',
+          value: value.memoryPairs.toDouble(),
+          min: 2,
+          max: 8,
+          divisions: 6,
+          onChanged: (v) => onChanged(value.copyWith(memoryPairs: v.round())),
+        );
+      case DismissTaskType.pattern:
+        return _LabeledSlider(
+          label: 'Độ dài chuỗi: ${value.patternLength}',
+          value: value.patternLength.toDouble(),
+          min: 2,
+          max: 10,
+          divisions: 8,
+          onChanged: (v) => onChanged(value.copyWith(patternLength: v.round())),
+        );
     }
   }
 }

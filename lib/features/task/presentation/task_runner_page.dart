@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../domain/entities/dismiss_task.dart';
 import '../domain/entities/task_result.dart';
 import 'tasks/math_task_page.dart';
+import 'tasks/memory_task_page.dart';
+import 'tasks/pattern_task_page.dart';
 import 'tasks/photo_task_page.dart';
 import 'tasks/shake_task_page.dart';
 import 'tasks/walk_task_page.dart';
@@ -25,6 +27,10 @@ class TaskRunnerPage extends StatelessWidget {
         return WalkTaskPage(config: config);
       case DismissTaskType.photo:
         return PhotoTaskPage(config: config);
+      case DismissTaskType.memory:
+        return MemoryTaskPage(config: config);
+      case DismissTaskType.pattern:
+        return PatternTaskPage(config: config);
       case DismissTaskType.none:
         return Scaffold(
           body: Center(

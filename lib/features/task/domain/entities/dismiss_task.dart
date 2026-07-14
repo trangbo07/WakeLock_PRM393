@@ -15,7 +15,13 @@ enum DismissTaskType {
   walk('Đi bộ'),
 
   /// Take a photo of a target (e.g. a plant).
-  photo('Chụp ảnh');
+  photo('Chụp ảnh'),
+
+  /// Flip cards to find all matching pairs.
+  memory('Ghi nhớ'),
+
+  /// Repeat a growing sequence of flashed tiles in order.
+  pattern('Nối hình');
 
   const DismissTaskType(this.label);
 
@@ -32,6 +38,8 @@ class DismissTaskConfig extends Equatable {
     this.shakeCount = 50,
     this.walkMeters = 30,
     this.photoTag,
+    this.memoryPairs = 6,
+    this.patternLength = 4,
   });
 
   final DismissTaskType type;
@@ -48,6 +56,12 @@ class DismissTaskConfig extends Equatable {
   /// photo: expected label / hint for the target object.
   final String? photoTag;
 
+  /// memory: number of matching card pairs on the board.
+  final int memoryPairs;
+
+  /// pattern: number of tiles in the sequence to repeat.
+  final int patternLength;
+
   static const DismissTaskConfig easy =
       DismissTaskConfig(type: DismissTaskType.none);
 
@@ -57,6 +71,8 @@ class DismissTaskConfig extends Equatable {
     int? shakeCount,
     int? walkMeters,
     String? photoTag,
+    int? memoryPairs,
+    int? patternLength,
   }) {
     return DismissTaskConfig(
       type: type ?? this.type,
@@ -64,10 +80,12 @@ class DismissTaskConfig extends Equatable {
       shakeCount: shakeCount ?? this.shakeCount,
       walkMeters: walkMeters ?? this.walkMeters,
       photoTag: photoTag ?? this.photoTag,
+      memoryPairs: memoryPairs ?? this.memoryPairs,
+      patternLength: patternLength ?? this.patternLength,
     );
   }
 
   @override
   List<Object?> get props =>
-      [type, difficulty, shakeCount, walkMeters, photoTag];
+      [type, difficulty, shakeCount, walkMeters, photoTag, memoryPairs, patternLength];
 }
