@@ -25,6 +25,14 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.CAMERA"/>
 
+    <!-- ============ Emergency SOS ============ -->
+    <!-- openExternalPick() itself needs no permission to launch the system
+         picker, but resolving the contact it returns (name/phone) still
+         queries the Contacts ContentProvider directly, which requires
+         READ_CONTACTS — without it the plugin's native query throws an
+         uncaught SecurityException and crashes the app. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+
     <application
         android:label="WakeLock"
         android:name="${applicationName}"
@@ -116,6 +124,25 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Emergency SOS: open the system SMS/dialer app via url_launcher. -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="sms"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
+        <!-- flutter_contacts: FlutterContacts.openExternalPick() launches an
+             implicit ACTION_PICK on the Contacts provider — without this
+             declaration, package-visibility rules (Android 11+) make the
+             system unable to resolve any activity for it, which throws an
+             uncaught ActivityNotFoundException on the native side and
+             crashes the whole app. -->
+        <intent>
+            <action android:name="android.intent.action.PICK"/>
+            <data android:mimeType="vnd.android.cursor.dir/contact"/>
         </intent>
     </queries>
 </manifest>
