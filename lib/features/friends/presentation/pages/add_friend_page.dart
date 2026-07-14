@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/design_tokens.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../profile/domain/entities/user_profile.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../profile/presentation/widgets/avatar_image.dart';
+import '../../domain/invite_link.dart';
 import '../providers/friends_providers.dart';
+import 'qr_page.dart';
 import 'send_invite_page.dart';
 
 /// Find people by username and start a friend request. QR / link methods are
@@ -56,9 +60,17 @@ class _AddFriendPageState extends ConsumerState<AddFriendPage> {
     }
   }
 
-  void _soon() => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(const SnackBar(content: Text('Tính năng sắp ra mắt')));
+  Future<void> _shareLink() async {
+    final username = ref.read(myProfileProvider).asData?.value?.username ?? '';
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Bạn cần đặt username (Hồ sơ → Chỉnh sửa) trước.')));
+      return;
+    }
+    await SharePlus.instance.share(ShareParams(
+      text: 'Kết bạn với mình trên WakeLock! ${buildInviteLink(username)}',
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,14 +110,16 @@ class _AddFriendPageState extends ConsumerState<AddFriendPage> {
                       _MethodTile(
                         icon: Icons.qr_code_scanner,
                         title: 'Quét mã QR',
-                        subtitle: 'Quét mã để kết bạn',
-                        onTap: _soon,
+                        subtitle: 'Quét mã / hiện mã của bạn để kết bạn',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(builder: (_) => const QrPage()),
+                        ),
                       ),
                       _MethodTile(
                         icon: Icons.link,
                         title: 'Mời qua link',
                         subtitle: 'Gửi link mời cho bạn bè',
-                        onTap: _soon,
+                        onTap: _shareLink,
                       ),
                     ],
                   ),
