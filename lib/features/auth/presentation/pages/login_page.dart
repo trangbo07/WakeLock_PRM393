@@ -85,11 +85,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _google() async {
+    setState(() => _busy = true);
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
       if (mounted) Navigator.of(context).pop();
-    } catch (_) {
-      _toast('Đăng nhập Google đang được hoàn thiện');
+    } catch (e) {
+      // User dismissed the Google sheet → stay silent; else surface the error.
+      if (!e.toString().contains('canceled')) {
+        _toast('Đăng nhập Google lỗi: ${_readable(e)}');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -111,6 +117,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
           child: Form(
             key: _form,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
