@@ -22,17 +22,46 @@ class FirestoreProfileRepository implements ProfileRepository {
   @override
   Future<void> upsertProfile(UserProfile p) => _ds.upsert(p.uid, _toMap(p));
 
+  @override
+  Future<bool> reserveUsername(String username, String uid) =>
+      _ds.reserveUsername(username, uid);
+
+  @override
+  Future<void> updateProfileFields(
+    String uid, {
+    String? username,
+    String? displayName,
+    String? avatarUrl,
+    String? avatarBase64,
+    String? bio,
+  }) {
+    final data = <String, dynamic>{};
+    if (username != null) data['username'] = username;
+    if (displayName != null) data['displayName'] = displayName;
+    if (avatarUrl != null) data['avatarUrl'] = avatarUrl;
+    if (avatarBase64 != null) data['avatarBase64'] = avatarBase64;
+    if (bio != null) data['bio'] = bio;
+    return _ds.upsert(uid, data);
+  }
+
   UserProfile _fromMap(String uid, Map<String, dynamic> m) => UserProfile(
         uid: uid,
         username: m['username'] as String? ?? '',
         displayName: m['displayName'] as String? ?? '',
         bio: m['bio'] as String? ?? '',
         avatarUrl: m['avatarUrl'] as String?,
+        avatarBase64: m['avatarBase64'] as String?,
         currentStreak: (m['currentStreak'] as num?)?.toInt() ?? 0,
         longestStreak: (m['longestStreak'] as num?)?.toInt() ?? 0,
         xp: (m['xp'] as num?)?.toInt() ?? 0,
         level: (m['level'] as num?)?.toInt() ?? 1,
         wakeRate: (m['wakeRate'] as num?)?.toDouble() ?? 0,
+        photosShared: (m['photosShared'] as num?)?.toInt() ?? 0,
+        coins: (m['coins'] as num?)?.toInt() ?? 0,
+        ownedItems: (m['ownedItems'] as List?)?.cast<String>() ?? const [],
+        dailyClaims:
+            (m['dailyClaims'] as Map?)?.map((k, v) => MapEntry('$k', '$v')) ??
+                const {},
       );
 
   Map<String, dynamic> _toMap(UserProfile p) => {
@@ -40,10 +69,15 @@ class FirestoreProfileRepository implements ProfileRepository {
         'displayName': p.displayName,
         'bio': p.bio,
         'avatarUrl': p.avatarUrl,
+        'avatarBase64': p.avatarBase64,
         'currentStreak': p.currentStreak,
         'longestStreak': p.longestStreak,
         'xp': p.xp,
         'level': p.level,
         'wakeRate': p.wakeRate,
+        'photosShared': p.photosShared,
+        'coins': p.coins,
+        'ownedItems': p.ownedItems,
+        'dailyClaims': p.dailyClaims,
       };
 }

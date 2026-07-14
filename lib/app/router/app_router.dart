@@ -6,6 +6,7 @@ import '../../features/alarm_ringing/presentation/pages/alarm_ringing_page.dart'
 import '../../features/ringtone/presentation/pages/ringtone_picker_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../shell/main_shell.dart';
+import '../shell/root_gate.dart';
 
 /// Named routes + a simple `onGenerateRoute`. Swap for go_router later if the
 /// navigation graph grows (deep links from notifications, etc.).
@@ -25,7 +26,8 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case home:
-        return _page(const MainShell());
+        // RootGate shows the splash briefly, then MainShell.
+        return _page(const RootGate());
       case alarmEdit:
         // Pass an Alarm as `arguments` to edit it; null creates a new one.
         return _page(AlarmEditPage(existing: settings.arguments as Alarm?));

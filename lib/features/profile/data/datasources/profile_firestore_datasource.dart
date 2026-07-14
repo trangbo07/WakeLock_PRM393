@@ -9,6 +9,8 @@ class ProfileFirestoreDataSource {
   final FirebaseFirestore _db;
 
   CollectionReference<Map<String, dynamic>> get _users => _db.collection('users');
+  CollectionReference<Map<String, dynamic>> get _usernames =>
+      _db.collection('usernames');
 
   Stream<Map<String, dynamic>?> watch(String uid) =>
       _users.doc(uid).snapshots().map((d) => d.data());
@@ -18,4 +20,16 @@ class ProfileFirestoreDataSource {
 
   Future<void> upsert(String uid, Map<String, dynamic> data) =>
       _users.doc(uid).set(data, SetOptions(merge: true));
+
+  /// Atomically claim [username] for [uid]. Returns false if another uid owns it.
+  /// `usernames/{username}` is the uniqueness index (doc id = the username).
+  Future<bool> reserveUsername(String username, String uid) {
+    final ref = _usernames.doc(username);
+    return _db.runTransaction<bool>((txn) async {
+      final snap = await txn.get(ref);
+      if (snap.exists && snap.data()?['uid'] != uid) return false;
+      txn.set(ref, {'uid': uid});
+      return true;
+    });
+  }
 }

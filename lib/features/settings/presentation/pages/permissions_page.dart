@@ -1,0 +1,77 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../domain/app_permission.dart';
+
+/// Anti-kill permission manager: shows each hardcore permission with its live
+/// grant status and a button to request it. Re-checks on resume so returning
+/// from system settings updates the row.
+class PermissionsPage extends ConsumerStatefulWidget {
+  const PermissionsPage({super.key});
+
+  @override
+  ConsumerState<PermissionsPage> createState() => _PermissionsPageState();
+}
+
+class _PermissionsPageState extends ConsumerState<PermissionsPage>
+    with WidgetsBindingObserver {
+  final Map<AppPermission, bool> _granted = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
+
+  Future<void> _refresh() async {
+    for (final p in AppPermission.values) {
+      _granted[p] = await p.isGranted();
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _request(AppPermission p) async {
+    final granted = await p.request();
+    if (mounted) setState(() => _granted[p] = granted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Chống tắt ứng dụng')),
+      body: ListView(
+        children: [
+          for (final p in AppPermission.values)
+            ListTile(
+              leading: Icon(
+                (_granted[p] ?? false)
+                    ? Icons.check_circle
+                    : Icons.error_outline,
+                color: (_granted[p] ?? false) ? Colors.green : Colors.orange,
+              ),
+              title: Text(p.title),
+              subtitle: Text(p.description),
+              trailing: (_granted[p] ?? false)
+                  ? null
+                  : TextButton(
+                      onPressed: () => _request(p),
+                      child: const Text('Cấp quyền'),
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
+}

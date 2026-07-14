@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// Thin wrapper over the Firebase Auth SDK. Returns raw [User]; the repository
 /// maps to AppUser. Email/password + reset + sign-out are wired; Google
@@ -28,15 +29,30 @@ class FirebaseAuthDataSource {
   Future<void> sendPasswordReset(String email) =>
       _auth.sendPasswordResetEmail(email: email);
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    // Also clear the Google session so the next sign-in shows the account picker.
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
+    await _auth.signOut();
+  }
 
-  /// TODO(Dev2): implement Google Sign-In.
-  /// google_sign_in 7.x flow → obtain idToken → sign in to Firebase:
-  ///   final cred = GoogleAuthProvider.credential(idToken: idToken);
-  ///   final res = await _auth.signInWithCredential(cred);
-  ///   return res.user!;
-  /// Web client id is in google-services.json (oauth_client type 3).
+  /// Google Sign-In (google_sign_in 6.x): pick account → exchange tokens for a
+  /// Firebase credential. Throws code 'canceled' if the user dismisses the sheet.
   Future<User> signInWithGoogle() async {
-    throw UnimplementedError('Google Sign-In: wire google_sign_in 7.x (see TODO)');
+    final googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
+      throw FirebaseAuthException(
+        code: 'canceled',
+        message: 'Đã huỷ đăng nhập Google',
+      );
+    }
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+      accessToken: googleAuth.accessToken,
+    );
+    final result = await _auth.signInWithCredential(credential);
+    return result.user!;
   }
 }

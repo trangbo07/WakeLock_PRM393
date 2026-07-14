@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +9,10 @@ import '../core/constants/app_constants.dart';
 import '../core/utils/logger.dart';
 import '../features/alarm_management/domain/entities/alarm.dart';
 import '../features/alarm_management/presentation/providers/alarm_providers.dart';
+import '../features/auth/presentation/providers/auth_providers.dart';
+import '../features/friends/domain/invite_link.dart';
+import '../features/friends/presentation/pages/send_invite_page.dart';
+import '../features/friends/presentation/providers/friends_providers.dart';
 import '../features/ringtone/presentation/providers/ringtone_providers.dart';
 import '../features/settings/domain/permission_onboarding.dart';
 import 'router/app_router.dart';
@@ -27,6 +34,10 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
   // from the camera) doesn't stack a second one.
   bool _ringingVisible = false;
 
+  // Friend-invite deep links (wakelock://add?u=<username>).
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSub;
+
   @override
   void initState() {
     super.initState();
@@ -44,12 +55,59 @@ class _WakeLockAppState extends ConsumerState<WakeLockApp>
       }
     });
     _checkRingingLaunch();
+    _initDeepLinks();
   }
 
   @override
   void dispose() {
+    _linkSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Listen for friend-invite deep links (cold start + while running) and route
+  /// to the send-invite screen for the linked username.
+  Future<void> _initDeepLinks() async {
+    try {
+      final initial = await _appLinks.getInitialLink();
+      if (initial != null) await _handleInviteLink(initial);
+    } catch (e) {
+      AppLogger.w('Initial deep link failed: $e');
+    }
+    _linkSub = _appLinks.uriLinkStream.listen(_handleInviteLink);
+  }
+
+  Future<void> _handleInviteLink(Uri uri) async {
+    final username = parseInviteUsername(uri.toString());
+    if (username == null) return;
+    final myUid = ref.read(sessionProvider).asData?.value?.uid;
+    if (myUid == null) {
+      _snack('Đăng nhập để kết bạn qua link');
+      return;
+    }
+    try {
+      final results = await ref
+          .read(friendsRepositoryProvider)
+          .searchByUsername(username, excludeUid: myUid);
+      final match = results.where((p) => p.username == username);
+      if (match.isEmpty) {
+        _snack('Không tìm thấy @$username');
+        return;
+      }
+      AppRouter.navigatorKey.currentState?.push(
+        MaterialPageRoute<void>(
+            builder: (_) => SendInvitePage(target: match.first)),
+      );
+    } catch (e) {
+      AppLogger.w('Invite link handling failed: $e');
+    }
+  }
+
+  void _snack(String message) {
+    final ctx = AppRouter.navigatorKey.currentContext;
+    if (ctx != null) {
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
