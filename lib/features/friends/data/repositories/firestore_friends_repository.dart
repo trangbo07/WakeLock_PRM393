@@ -76,6 +76,7 @@ class FirestoreFriendsRepository implements FriendsRepository {
         name: m['name'] as String? ?? '',
         username: m['username'] as String? ?? '',
         avatarBase64: m['avatarBase64'] as String?,
+        avatarUrl: m['avatarUrl'] as String?,
         streak: (m['streak'] as num?)?.toInt() ?? 0,
       );
 
@@ -85,6 +86,7 @@ class FirestoreFriendsRepository implements FriendsRepository {
         fromName: m['fromName'] as String? ?? '',
         fromUsername: m['fromUsername'] as String? ?? '',
         fromAvatarBase64: m['fromAvatarBase64'] as String?,
+        fromAvatarUrl: m['fromAvatarUrl'] as String?,
         message: m['message'] as String? ?? '',
       );
 

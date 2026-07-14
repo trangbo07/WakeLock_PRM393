@@ -15,8 +15,8 @@ import '../providers/friends_providers.dart';
 import 'add_friend_page.dart';
 import 'friend_profile_page.dart';
 
-/// Friends tab: friends list + incoming requests. Login required (guests see a
-/// prompt). Reachable actions: add friend, accept/reject requests, open profile.
+/// Friends tab: friends list + incoming requests. Pill tabs + a full-width
+/// "add friend" button, on the indigo accent. Login required (guests see a prompt).
 class FriendsPage extends ConsumerWidget {
   const FriendsPage({super.key});
 
@@ -31,28 +31,75 @@ class FriendsPage extends ConsumerWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Bạn bè'),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: 'Bạn bè (${friends.length})'),
-              Tab(text: 'Lời mời (${requests.length})'),
-            ],
-          ),
-        ),
-        body: TabBarView(
+        appBar: AppBar(title: const Text('Bạn bè')),
+        body: Column(
           children: [
-            _FriendsList(friends: friends),
-            _RequestsList(requests: requests, user: user),
+            _PillTabs(
+              labels: ['Bạn bè (${friends.length})', 'Lời mời (${requests.length})'],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _FriendsList(friends: friends),
+                  _RequestsList(requests: requests, user: user),
+                ],
+              ),
+            ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const AddFriendPage()),
+        bottomNavigationBar: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(
+              AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg)),
+              ),
+              icon: const Icon(Icons.person_add_alt_1),
+              label: const Text('Thêm bạn bè'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AddFriendPage()),
+              ),
+            ),
           ),
-          icon: const Icon(Icons.person_add_alt_1),
-          label: const Text('Thêm bạn bè'),
         ),
+      ),
+    );
+  }
+}
+
+/// Segmented pill tab bar (selected tab = filled indigo pill).
+class _PillTabs extends StatelessWidget {
+  const _PillTabs({required this.labels});
+  final List<String> labels;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: TabBar(
+        indicator: BoxDecoration(
+          color: AppColors.accent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        splashBorderRadius: BorderRadius.circular(AppRadius.pill),
+        labelColor: Colors.white,
+        unselectedLabelColor: AppColors.mutedForeground,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+        tabs: labels.map((l) => Tab(text: l)).toList(),
       ),
     );
   }
@@ -110,36 +157,40 @@ class _FriendsList extends StatelessWidget {
           icon: Icons.group_outlined,
           text: 'Chưa có bạn bè.\nNhấn "Thêm bạn bè" để kết nối.');
     }
+    final maxStreak =
+        friends.fold<int>(0, (m, f) => f.streak > m ? f.streak : m);
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       itemCount: friends.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final f = friends[i];
+        final isTop = f.streak > 0 && f.streak == maxStreak;
         return ListTile(
           leading: CircleAvatar(
+            radius: 24,
             backgroundColor: AppColors.surfaceMuted,
-            backgroundImage: avatarImageProvider(base64Data: f.avatarBase64),
-            child: f.avatarBase64 == null
+            backgroundImage: avatarImageProvider(
+                base64Data: f.avatarBase64, url: f.avatarUrl),
+            child: (f.avatarBase64 == null && (f.avatarUrl ?? '').isEmpty)
                 ? Text(_initial(f.name.isEmpty ? f.username : f.name))
                 : null,
           ),
           title: Text(f.name.isEmpty ? '@${f.username}' : f.name),
           subtitle: f.username.isNotEmpty ? Text('@${f.username}') : null,
-          trailing: f.streak > 0
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('${f.streak}',
-                        style: const TextStyle(
-                            color: AppColors.secondary,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(width: 2),
-                    const Icon(Icons.local_fire_department,
-                        size: 18, color: AppColors.secondary),
-                  ],
-                )
-              : const Icon(Icons.chevron_right),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${f.streak} ngày',
+                  style: TextStyle(color: AppColors.mutedForeground)),
+              const SizedBox(width: 6),
+              Icon(
+                isTop ? Icons.local_fire_department : Icons.chevron_right,
+                size: 20,
+                color: isTop ? AppColors.secondary : AppColors.mutedForeground,
+              ),
+            ],
+          ),
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute<void>(
                 builder: (_) => FriendProfilePage(uid: f.uid)),
@@ -163,17 +214,18 @@ class _RequestsList extends ConsumerWidget {
           icon: Icons.mail_outline, text: 'Không có lời mời nào.');
     }
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       itemCount: requests.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (_, i) {
         final r = requests[i];
         return ListTile(
           leading: CircleAvatar(
+            radius: 24,
             backgroundColor: AppColors.surfaceMuted,
-            backgroundImage:
-                avatarImageProvider(base64Data: r.fromAvatarBase64),
-            child: r.fromAvatarBase64 == null
+            backgroundImage: avatarImageProvider(
+                base64Data: r.fromAvatarBase64, url: r.fromAvatarUrl),
+            child: (r.fromAvatarBase64 == null && (r.fromAvatarUrl ?? '').isEmpty)
                 ? Text(_initial(r.fromName.isEmpty ? r.fromUsername : r.fromName))
                 : null,
           ),
@@ -183,7 +235,7 @@ class _RequestsList extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.check_circle, color: AppColors.primary),
+                icon: const Icon(Icons.check_circle, color: AppColors.accent),
                 tooltip: 'Chấp nhận',
                 onPressed: () => _accept(ref, r),
               ),

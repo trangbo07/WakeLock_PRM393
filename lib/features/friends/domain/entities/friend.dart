@@ -7,6 +7,7 @@ class Friend extends Equatable {
     this.name = '',
     this.username = '',
     this.avatarBase64,
+    this.avatarUrl,
     this.streak = 0,
   });
 
@@ -14,10 +15,12 @@ class Friend extends Equatable {
   final String name;
   final String username;
   final String? avatarBase64;
+  final String? avatarUrl;
   final int streak;
 
   @override
-  List<Object?> get props => [uid, name, username, avatarBase64, streak];
+  List<Object?> get props =>
+      [uid, name, username, avatarBase64, avatarUrl, streak];
 }
 
 /// A pending incoming friend request (from `friend_requests`).
@@ -28,6 +31,7 @@ class FriendRequest extends Equatable {
     this.fromName = '',
     this.fromUsername = '',
     this.fromAvatarBase64,
+    this.fromAvatarUrl,
     this.message = '',
   });
 
@@ -36,9 +40,17 @@ class FriendRequest extends Equatable {
   final String fromName;
   final String fromUsername;
   final String? fromAvatarBase64;
+  final String? fromAvatarUrl;
   final String message;
 
   @override
-  List<Object?> get props =>
-      [id, fromUid, fromName, fromUsername, fromAvatarBase64, message];
+  List<Object?> get props => [
+        id,
+        fromUid,
+        fromName,
+        fromUsername,
+        fromAvatarBase64,
+        fromAvatarUrl,
+        message,
+      ];
 }
