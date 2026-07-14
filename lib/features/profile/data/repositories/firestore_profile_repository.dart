@@ -27,21 +27,19 @@ class FirestoreProfileRepository implements ProfileRepository {
       _ds.reserveUsername(username, uid);
 
   @override
-  Future<String> uploadAvatar(String uid, String filePath) =>
-      _ds.uploadAvatar(uid, filePath);
-
-  @override
   Future<void> updateProfileFields(
     String uid, {
     String? username,
     String? displayName,
     String? avatarUrl,
+    String? avatarBase64,
     String? bio,
   }) {
     final data = <String, dynamic>{};
     if (username != null) data['username'] = username;
     if (displayName != null) data['displayName'] = displayName;
     if (avatarUrl != null) data['avatarUrl'] = avatarUrl;
+    if (avatarBase64 != null) data['avatarBase64'] = avatarBase64;
     if (bio != null) data['bio'] = bio;
     return _ds.upsert(uid, data);
   }
@@ -52,6 +50,7 @@ class FirestoreProfileRepository implements ProfileRepository {
         displayName: m['displayName'] as String? ?? '',
         bio: m['bio'] as String? ?? '',
         avatarUrl: m['avatarUrl'] as String?,
+        avatarBase64: m['avatarBase64'] as String?,
         currentStreak: (m['currentStreak'] as num?)?.toInt() ?? 0,
         longestStreak: (m['longestStreak'] as num?)?.toInt() ?? 0,
         xp: (m['xp'] as num?)?.toInt() ?? 0,
@@ -64,6 +63,7 @@ class FirestoreProfileRepository implements ProfileRepository {
         'displayName': p.displayName,
         'bio': p.bio,
         'avatarUrl': p.avatarUrl,
+        'avatarBase64': p.avatarBase64,
         'currentStreak': p.currentStreak,
         'longestStreak': p.longestStreak,
         'xp': p.xp,

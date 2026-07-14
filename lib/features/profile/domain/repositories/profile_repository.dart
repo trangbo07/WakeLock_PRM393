@@ -11,15 +11,14 @@ abstract class ProfileRepository {
   /// Claim a unique username. Returns false if already taken by another uid.
   Future<bool> reserveUsername(String username, String uid);
 
-  /// Upload an avatar image; returns its download URL.
-  Future<String> uploadAvatar(String uid, String filePath);
-
   /// Partial update — writes only the provided fields (won't reset stats).
+  /// [avatarBase64] stores a small avatar inline (no Cloud Storage needed).
   Future<void> updateProfileFields(
     String uid, {
     String? username,
     String? displayName,
     String? avatarUrl,
+    String? avatarBase64,
     String? bio,
   });
 }

@@ -9,6 +9,7 @@ class UserProfile extends Equatable {
     this.displayName = '',
     this.bio = '',
     this.avatarUrl,
+    this.avatarBase64,
     this.currentStreak = 0,
     this.longestStreak = 0,
     this.xp = 0,
@@ -20,7 +21,13 @@ class UserProfile extends Equatable {
   final String username;
   final String displayName;
   final String bio;
+
+  /// Remote avatar URL (e.g. from Google sign-in). May be null.
   final String? avatarUrl;
+
+  /// Small avatar stored as base64 JPEG — avoids Cloud Storage (free plan).
+  final String? avatarBase64;
+
   final int currentStreak;
   final int longestStreak;
   final int xp;
@@ -34,6 +41,7 @@ class UserProfile extends Equatable {
     String? displayName,
     String? bio,
     String? avatarUrl,
+    String? avatarBase64,
     int? currentStreak,
     int? longestStreak,
     int? xp,
@@ -46,6 +54,7 @@ class UserProfile extends Equatable {
         displayName: displayName ?? this.displayName,
         bio: bio ?? this.bio,
         avatarUrl: avatarUrl ?? this.avatarUrl,
+        avatarBase64: avatarBase64 ?? this.avatarBase64,
         currentStreak: currentStreak ?? this.currentStreak,
         longestStreak: longestStreak ?? this.longestStreak,
         xp: xp ?? this.xp,
@@ -60,6 +69,7 @@ class UserProfile extends Equatable {
         displayName,
         bio,
         avatarUrl,
+        avatarBase64,
         currentStreak,
         longestStreak,
         xp,

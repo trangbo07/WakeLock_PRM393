@@ -10,6 +10,7 @@ import '../../../auth/presentation/pages/register_page.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../providers/profile_providers.dart';
+import '../widgets/avatar_image.dart';
 
 /// Profile tab. Login-optional: guests see a sign-in prompt (offline alarm
 /// features keep working); signed-in users see their profile + stats.
@@ -104,7 +105,10 @@ class _ProfileView extends ConsumerWidget {
         ? profile!.displayName
         : (user.displayName ?? 'Người dùng');
     final username = profile?.username ?? '';
-    final photoUrl = profile?.avatarUrl ?? user.photoUrl;
+    final avatar = avatarImageProvider(
+      base64Data: profile?.avatarBase64,
+      url: profile?.avatarUrl ?? user.photoUrl,
+    );
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -114,11 +118,8 @@ class _ProfileView extends ConsumerWidget {
           child: CircleAvatar(
             radius: 46,
             backgroundColor: AppColors.surfaceMuted,
-            backgroundImage:
-                (photoUrl != null && photoUrl.isNotEmpty)
-                    ? NetworkImage(photoUrl)
-                    : null,
-            child: (photoUrl == null || photoUrl.isEmpty)
+            backgroundImage: avatar,
+            child: avatar == null
                 ? Text(
                     _initial(name),
                     style: theme.textTheme.headlineMedium

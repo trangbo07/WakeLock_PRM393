@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 /// Raw Firestore access for `users/{uid}`. Returns plain maps; the repository
 /// maps to/from [UserProfile]. This is the Firestore template for Dev 2.
@@ -34,12 +31,5 @@ class ProfileFirestoreDataSource {
       txn.set(ref, {'uid': uid});
       return true;
     });
-  }
-
-  /// Upload an avatar image to `users/{uid}/avatar.jpg` and return its URL.
-  Future<String> uploadAvatar(String uid, String filePath) async {
-    final ref = FirebaseStorage.instance.ref('users/$uid/avatar.jpg');
-    await ref.putFile(File(filePath));
-    return ref.getDownloadURL();
   }
 }

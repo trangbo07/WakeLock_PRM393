@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -65,7 +66,7 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
     );
     if (source == null) return;
     final img = await ImagePicker()
-        .pickImage(source: source, maxWidth: 512, imageQuality: 85);
+        .pickImage(source: source, maxWidth: 256, imageQuality: 60);
     if (img != null && mounted) setState(() => _avatar = img);
   }
 
@@ -86,15 +87,16 @@ class _CompleteProfilePageState extends ConsumerState<CompleteProfilePage> {
         _toast('Username "@$username" đã có người dùng');
         return;
       }
-      String? avatarUrl;
+      String? avatarBase64;
       if (_avatar != null) {
-        avatarUrl = await repo.uploadAvatar(user.uid, _avatar!.path);
+        // Inline the (small, resized) avatar as base64 — no Cloud Storage.
+        avatarBase64 = base64Encode(await _avatar!.readAsBytes());
       }
       await repo.updateProfileFields(
         user.uid,
         username: username,
         displayName: _name.text.trim(),
-        avatarUrl: avatarUrl,
+        avatarBase64: avatarBase64,
       );
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } catch (e) {
