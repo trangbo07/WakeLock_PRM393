@@ -23,3 +23,8 @@ final myProfileProvider = StreamProvider<UserProfile?>((ref) {
   if (user == null) return Stream.value(null);
   return ref.watch(profileRepositoryProvider).watchProfile(user.uid);
 });
+
+/// Any user's profile by uid — used for friend profiles.
+final userProfileProvider = FutureProvider.family<UserProfile?, String>(
+  (ref, uid) => ref.watch(profileRepositoryProvider).getProfile(uid),
+);

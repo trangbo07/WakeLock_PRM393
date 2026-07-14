@@ -1,31 +1,36 @@
 rules_version = '2';
 
-// WakeLock Firestore rules. Copy into Firebase Console → Firestore Database →
-// Rules → Publish (or deploy with `firebase deploy --only firestore:rules`).
-// Dev-oriented but not wide open: signed-in users can read profiles, but only
-// write their own doc; usernames can't be stolen. Extend as social features land.
+// WakeLock Firestore rules.
+//
+// ⚠️ DEV MODE: any signed-in user can read/write any document. This keeps
+// iteration fast while the social features (friends, feed, challenges, ...) are
+// being built — no rule change needed per new collection.
+//
+// 🔒 BEFORE PRODUCTION: replace with per-collection rules (owner-only writes,
+// friend-scoped reads). A stricter reference set is kept commented below.
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Public-ish profiles: any signed-in user can read (friends, leaderboard);
-    // only the owner can write their own doc.
-    match /users/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
-
-    // Username uniqueness index (doc id = the username, value = { uid }).
-    // Anyone signed-in can look up; a user may only claim a name for themselves
-    // and cannot overwrite a name already owned by someone else.
-    match /usernames/{username} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid;
-      allow update, delete: if request.auth != null
-                    && resource.data.uid == request.auth.uid;
-    }
-
-    // TODO (as features land): posts/{postId} (+comments,+reactions),
-    // friend_requests, friendships, challenges/{id}, leaderboards.
   }
 }
+
+// --- Production reference (do NOT use as-is in dev; tighten & enable later) ---
+// match /users/{uid} {
+//   allow read: if request.auth != null;
+//   allow write: if request.auth != null && request.auth.uid == uid;
+// }
+// match /usernames/{username} {
+//   allow read: if request.auth != null;
+//   allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+//   allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+// }
+// match /friend_requests/{id} {
+//   allow read: if request.auth != null &&
+//     (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+//   allow create: if request.auth != null && request.resource.data.from == request.auth.uid;
+//   allow delete: if request.auth != null &&
+//     (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+// }
+// match /users/{uid}/friends/{friendId} { allow read, write: if request.auth != null; }
