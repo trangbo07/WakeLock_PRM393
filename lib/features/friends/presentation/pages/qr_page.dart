@@ -94,7 +94,12 @@ class _ScanTab extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        MobileScanner(onDetect: onDetect),
+        MobileScanner(
+          onDetect: onDetect,
+          // Camera/ML-Kit failures (no camera on emulators, denied permission,
+          // unsupported device) otherwise surface as a raw native crash string.
+          errorBuilder: (context, error) => const _ScanError(),
+        ),
         Container(
           width: 240,
           height: 240,
@@ -109,6 +114,45 @@ class _ScanTab extends StatelessWidget {
               style: TextStyle(color: Colors.white)),
         ),
       ],
+    );
+  }
+}
+
+/// Friendly fallback when the camera/ML-Kit scanner can't start (denied
+/// permission, unsupported device) instead of a raw native error string.
+class _ScanError extends StatelessWidget {
+  const _ScanError();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.no_photography_outlined,
+                  size: 64, color: Colors.white70),
+              SizedBox(height: AppSpacing.md),
+              Text('Không mở được camera để quét',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600)),
+              SizedBox(height: AppSpacing.sm),
+              Text(
+                'Hãy cấp quyền Camera cho ứng dụng, hoặc kết bạn bằng cách '
+                'tìm username ở màn trước.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

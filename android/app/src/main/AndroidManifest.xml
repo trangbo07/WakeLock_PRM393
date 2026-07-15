@@ -74,6 +74,13 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- Preload the ML Kit barcode model at install time so the friend-QR
+             scanner has a ready model on first use (avoids a null-model native
+             crash the first time the scanner opens). -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode" />
+
         <!-- Native alarm ring: receiver started by the background isolate's
              broadcast, which starts the looping-sound foreground service. -->
         <receiver
